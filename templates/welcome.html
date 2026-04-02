@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #27ae60; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f5f5f5; }
+        .button { background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to EthioNex!</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{ username }},</p>
+            <p>Welcome to EthioNex Marketplace - Ethiopia's premier online marketplace!</p>
+            
+            <p>We're excited to have you on board. Here's what you can do:</p>
+            <ul>
+                <li>🛍️ Browse thousands of products</li>
+                <li>🛒 Add items to your cart</li>
+                <li>⭐ Leave reviews for products you love</li>
+                {% if is_seller %}
+                <li>📦 List your own products for sale</li>
+                <li>📊 Track your sales dashboard</li>
+                {% endif %}
+            </ul>
+            
+            <p style="text-align: center;">
+                <a href="http://127.0.0.1:8000/frontend/" class="button">Start Shopping Now</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>Happy Shopping!<br>The EthioNex Team</p>
+        </div>
+    </div>
+</body>
+</html>
