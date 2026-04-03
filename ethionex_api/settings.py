@@ -6,10 +6,10 @@ from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-your-secret-key-here-change-in-production"
+SECRET_KEY = "django-insecure-8x8x8x8x8x8x8x8x8x8x8x8x8x8x8x8x8x8x8x8x"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -30,12 +30,12 @@ INSTALLED_APPS = [
     "drf_yasg",
     "corsheaders",
     "django_filters",
+    "django_rest_passwordreset",
     # Local apps
     "accounts",
     "products",
     "orders",
     "cart",
-    "django_rest_passwordreset",
 ]
 
 MIDDLEWARE = [
@@ -145,62 +145,3 @@ SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
     "JSON_EDITOR": True,
 }
-
-# Email Configuration (optional - for email notifications)
-# Uncomment and configure when ready for email
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
-# DEFAULT_FROM_EMAIL = 'EthioNex Marketplace <noreply@ethionex.com>'
-from .settings import *
-
-DEBUG = False
-ALLOWED_HOSTS = ["your-domain.com", "www.your-domain.com", "ethionex.onrender.com"]
-
-# Database (PostgreSQL for production)
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME'),
-#         'USER': os.environ.get('DB_USER'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD'),
-#         'HOST': os.environ.get('DB_HOST'),
-#         'PORT': os.environ.get('DB_PORT', '5432'),
-#     }
-# }
-
-# Security
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-
-CORS_ALLOWED_ORIGINS = [
-    "https://your-domain.com",
-    "https://www.your-domain.com",
-]
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-default-key")
-DEBUG = os.environ.get("DEBUG", "True") == "True"
-# Production settings
-import os
-
-# Get environment from Render
-DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = ["*"]
-
-# Static files for production
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-# Add whitenoise middleware (add to MIDDLEWARE)
-# 'whitenoise.middleware.WhiteNoiseMiddleware',  # Add after SecurityMiddleware

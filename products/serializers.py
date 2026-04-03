@@ -45,11 +45,10 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_id = serializers.IntegerField(source="seller.id", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
-    average_rating = serializers.ReadOnlyField()  # Add this
-    total_reviews = serializers.ReadOnlyField()  # Add this
+    average_rating = serializers.ReadOnlyField()
+    total_reviews = serializers.ReadOnlyField()
     reviews = ReviewSerializer(many=True, read_only=True)
-    image_url = serializers.SerializerMethodField()
-    gallery = ProductImageSerializer(source="extra_images", many=True, read_only=True)
+    image_url = serializers.SerializerMethodField()  # This exists
 
     class Meta:
         model = Product
@@ -66,16 +65,21 @@ class ProductSerializer(serializers.ModelSerializer):
             "condition",
             "quantity",
             "image",
+            "image_url",
             "is_available",
-            "views_count",
+            "views_count",  # ← Added image_url here
             "average_rating",
             "total_reviews",
-            "reviews",  # Added fields
+            "reviews",
+            "images",
             "created_at",
             "updated_at",
-            "images",
         ]
-        read_only_fields = ["id", "seller", "views_count", "created_at", "updated_at"]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
