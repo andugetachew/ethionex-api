@@ -9,22 +9,17 @@ from ethionex_api.email_utils import send_order_confirmation
 
 
 class OrderListCreateView(APIView):
-    """List user's orders or create a new order from cart"""
-
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        """Get all orders for the logged-in user"""
         orders = Order.objects.filter(user=request.user)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        """Create an order from current cart"""
         serializer = CreateOrderSerializer(data=request.data)
 
         if serializer.is_valid():
-            # Get user's cart
             try:
                 cart = Cart.objects.get(user=request.user)
             except Cart.DoesNotExist:
@@ -32,19 +27,16 @@ class OrderListCreateView(APIView):
                     {"error": "Your cart is empty"}, status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Check if cart has items
             if not cart.items.exists():
                 return Response(
                     {"error": "Cannot create order from empty cart"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Calculate totals
             subtotal = cart.total_price
             delivery_fee = serializer.validated_data.get("delivery_fee", 0)
             total = subtotal + delivery_fee
 
-            # Create order
             order = Order.objects.create(
                 user=request.user,
                 payment_method=serializer.validated_data["payment_method"],
@@ -59,7 +51,6 @@ class OrderListCreateView(APIView):
                 notes=serializer.validated_data.get("notes", ""),
             )
 
-            # Create order items from cart items
             for cart_item in cart.items.all():
                 OrderItem.objects.create(
                     order=order,
@@ -67,13 +58,16 @@ class OrderListCreateView(APIView):
                     quantity=cart_item.quantity,
                     price=cart_item.product.price,
                 )
-                send_order_confirmation(order)
 
             # Clear the cart after order is created
             cart.items.all().delete()
-            send_order_confirmation(order)
 
-            # Return the created order
+            # Send email only once (REMOVE THE DUPLICATE)
+            try:
+                send_order_confirmation(order)
+            except:
+                pass  # Email optional
+
             order_serializer = OrderSerializer(order)
             return Response(order_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -81,28 +75,28 @@ class OrderListCreateView(APIView):
 
 
 class OrderDetailView(APIView):
-    """Get, update or cancel a specific order"""
-
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self, order_id, user):
-        return get_object_or_404(Order, id=order_id, user=user)
+    def get_object(self, order_number, user):
+        return get_object_or_404(Order, order_number=order_number, user=user)
 
-    def get(self, request, order_id):
-        order = self.get_object(order_id, request.user)
+    def get(self, request, order_number):
+        order = self.get_object(order_number, request.user)
         serializer = OrderSerializer(order)
         return Response(serializer.data)
 
-    def put(self, request, order_id):
-        """Cancel an order (only if pending)"""
-        order = self.get_object(order_id, request.user)
+    def put(self, request, order_number):
+        order = self.get_object(order_number, request.user)
 
         if order.status == "pending":
             order.status = "cancelled"
             order.save()
-            serializer = OrderSerializer(order)
             return Response(
-                {"message": "Order cancelled successfully", "order": serializer.data}
+                {
+                    "message": "Order cancelled successfully",
+                    "order_number": order.order_number,
+                    "status": order.status,
+                }
             )
         else:
             return Response(

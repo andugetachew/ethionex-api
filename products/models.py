@@ -22,6 +22,8 @@ class Category(models.Model):
 class Product(models.Model):
     """Product model for marketplace"""
 
+    image = models.ImageField(upload_to="products/", null=True, blank=True)
+
     CONDITION_CHOICES = [
         ("new", "New"),
         ("like_new", "Like New"),

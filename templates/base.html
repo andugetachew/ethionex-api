@@ -123,11 +123,23 @@
         
         .product-image {
             width: 100%;
-            height: 150px;
+            height: 180px;
             object-fit: cover;
-            border-radius: 5px;
+            border-radius: 10px;
             margin-bottom: 0.5rem;
-            background: #ecf0f1;
+            background: #f5f5f5;
+        }
+
+        .product-image-container {
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .product-title {
@@ -234,15 +246,18 @@
             height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 1000;
+            overflow-y: auto;
         }
-        
+
         .modal-content {
             background: white;
-            margin: 10% auto;
+            margin: 5% auto;
             padding: 2rem;
             width: 90%;
             max-width: 500px;
             border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .stats-grid {
@@ -334,6 +349,110 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .order-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
+
+        .filter-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.active {
+            background: #007bff;
+        }
+
+        .order-card {
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+        }
+
+        .order-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .order-cancelled {
+            background: #fff5f5 !important;
+            border-left: 4px solid #dc3545 !important;
+            opacity: 0.85;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .empty-state p {
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        #cart-count {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+            display: none;
+            font-weight: bold;
+        }
+
+        #search-suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #search-suggestions div:hover {
+            background: #f0f0f0;
+        }
+
+        .stock-status {
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .stock-instock {
+            color: #28a745;
+        }
+
+        .stock-lowstock {
+            color: #ffc107;
+        }
+
+        .stock-outofstock {
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -384,6 +503,9 @@
             </div>
             <button class="btn btn-primary" onclick="login()">Login</button>
             <button class="btn" onclick="closeModal('loginModal')">Cancel</button>
+            <div style="margin-top: 1rem; text-align: center;">
+            <a href="#" onclick="showForgotPassword()" style="color: #3498db; text-decoration: none;">Forgot Password?</a>
+            </div>
         </div>
     </div>
     
@@ -401,7 +523,7 @@
             </div>
             <div class="form-group">
                 <label>Phone</label>
-                <input type="text" id="reg-phone" placeholder="0912345678">
+                <input type="text" id="reg-phone" placeholder="0923069966">
             </div>
             <div class="form-group">
                 <label>Password</label>
@@ -414,16 +536,57 @@
             <div class="form-group">
                 <label>
                     <input type="checkbox" id="reg-is-seller"> Register as Seller
-                </label>
+                </label> 
             </div>
             <button class="btn btn-primary" onclick="register()">Register</button>
             <button class="btn" onclick="closeModal('registerModal')">Cancel</button>
         </div>
     </div>
     
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <h2>Checkout Information</h2>
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="checkout-name" placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" id="checkout-phone" placeholder="09xxxxxxxx">
+            </div>
+            <div class="form-group">
+                <label>Delivery Address *</label>
+                <textarea id="checkout-address" rows="2" placeholder="Enter your address"></textarea>
+            </div>
+            <div class="form-group">
+                <label>City *</label>
+                <input type="text" id="checkout-city" value="Addis Ababa">
+            </div>
+            <div class="form-group">
+                <label>Payment Method</label>
+                <select id="checkout-payment">
+                    <option value="cash">💵 Cash on Delivery</option>
+                    <option value="telebirr">📱 Telebirr</option>
+                    <option value="cbe">🏦 CBE Birr</option>
+                </select>
+            </div>
+            <div style="border-top: 1px solid #ddd; padding-top: 1rem;">
+                <h3>Total: <span id="checkout-total">0</span> ETB</h3>
+                <small>+ 100 ETB delivery fee</small>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-success" onclick="submitOrder()">Place Order</button>
+                <button class="btn" onclick="closeModal('checkoutModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="message"></div>
+
     
     <script>
+        const API_BASE = 'http://127.0.0.1:8000';
         let token = localStorage.getItem('token');
         
         // Initial load
@@ -435,8 +598,8 @@
         
         showHome();
         
-     function fetchUserInfo() {
-            fetch('/api/auth/profile/', {
+        function fetchUserInfo() {
+            fetch(API_BASE + '/api/auth/profile/', {
                 headers: {'Authorization': `Bearer ${token}`}
             })
             .then(response => response.json())
@@ -463,7 +626,7 @@
         function showHome() {
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading...</div>';
             
-            fetch('/api/products/')
+            fetch(API_BASE + '/api/products/')
                 .then(r => r.json())
                 .then(products => {
                     const featured = products.slice(0, 4);
@@ -478,9 +641,14 @@
                     `;
                     
                     featured.forEach(product => {
+                        let imageHtml = '<div class="product-image-container"><span>📦 No Image</span></div>';
+                        if (product.image_url) {
+                            imageHtml = `<div class="product-image-container"><img src="${product.image_url}" class="product-image"></div>`;
+                        }
+                        
                         html += `
                             <div class="product-card">
-                                ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : '<div class="product-image" style="display: flex; align-items: center; justify-content: center;">📦 No Image</div>'}
+                                ${imageHtml}
                                 <div class="product-title">${product.name}</div>
                                 <div class="product-price">${parseInt(product.price).toLocaleString()} ETB</div>
                                 <div class="product-rating">⭐ ${product.average_rating || 0}/5</div>
@@ -494,6 +662,10 @@
                     
                     html += `</div>`;
                     document.getElementById('dynamic-content').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading products:', error);
+                    document.getElementById('dynamic-content').innerHTML = '<p>Error loading products. Make sure server is running.</p>';
                 });
         }
         
@@ -502,14 +674,14 @@
             const categoryFilter = document.getElementById('category-filter') ? document.getElementById('category-filter').value : '';
             const sortBy = document.getElementById('sort-by') ? document.getElementById('sort-by').value : '';
             
-            let url = `/api/products/?${searchTerm ? `search=${searchTerm}&` : ''}${categoryFilter ? `category=${categoryFilter}&` : ''}${sortBy ? `ordering=${sortBy}&` : ''}`;
+            let url = API_BASE + `/api/products/?${searchTerm ? `search=${searchTerm}&` : ''}${categoryFilter ? `category=${categoryFilter}&` : ''}${sortBy ? `ordering=${sortBy}&` : ''}`;
             url = url.replace(/[&?]$/, '');
             
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading products...</div>';
             
             Promise.all([
                 fetch(url).then(r => r.json()),
-                fetch('/api/categories/').then(r => r.json())
+                fetch(API_BASE + '/api/categories/').then(r => r.json())
             ]).then(([products, categories]) => {
                 let html = `
                     <h1>🛍️ All Products</h1>
@@ -551,11 +723,13 @@
                     products.forEach(product => {
                         html += `
                             <div class="product-card">
-                                ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : '<div class="product-image" style="display: flex; align-items: center; justify-content: center;">📦 No Image</div>'}
+                                <div style="width: 100%; height: 180px; overflow: hidden; border-radius: 5px; margin-bottom: 0.5rem;">
+                                    ${product.image ? `<img src="${product.image}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #ecf0f1;">📦 No Image</div>'}
+                                </div>
                                 <div class="product-title">${product.name}</div>
                                 <div class="product-price">${parseInt(product.price).toLocaleString()} ETB</div>
                                 <div class="product-rating">⭐ ${product.average_rating || 0}/5 (${product.total_reviews || 0} reviews)</div>
-                                <p>${product.description ? product.description.substring(0, 80) : 'No description'}...</p>
+                                <p>${product.description ? product.description.substring(0, 60) : 'No description'}...</p>
                                 <div class="product-actions">
                                     ${token ? `<button class="btn btn-primary" onclick="addToCart(${product.id})">🛒 Add to Cart</button>
                                     <button class="btn btn-warning" onclick="addToWishlist(${product.id})">❤️ Wishlist</button>
@@ -568,6 +742,9 @@
                 
                 html += `</div><p style="margin-top: 1rem; text-align: center;">Found ${products.length} product(s)</p>`;
                 document.getElementById('dynamic-content').innerHTML = html;
+            }).catch(error => {
+                console.error('Error loading products:', error);
+                document.getElementById('dynamic-content').innerHTML = '<p>Error loading products. Please refresh the page.</p>';
             });
         }
         
@@ -575,9 +752,14 @@
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading product details...</div>';
             
             Promise.all([
-                fetch(`/api/products/${productId}/`).then(r => r.json()),
-                fetch(`/api/products/${productId}/reviews/`).then(r => r.json())
+                fetch(API_BASE + `/api/products/${productId}/`).then(r => r.json()),
+                fetch(API_BASE + `/api/products/${productId}/reviews/`).then(r => r.json())
             ]).then(([product, reviews]) => {
+                let imageHtml = '<div style="background: #ecf0f1; border-radius: 10px; padding: 2rem; text-align: center;">📦 No Image Available</div>';
+                if (product.image_url) {
+                    imageHtml = `<img src="${product.image_url}" style="width: 100%; border-radius: 10px;">`;
+                }
+                
                 let html = `
                     <button class="btn" onclick="showProducts()" style="margin-bottom: 1rem;">← Back to Products</button>
                     
@@ -586,7 +768,7 @@
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 1rem;">
                             <div>
-                                ${product.image ? `<img src="${product.image}" style="width: 100%; border-radius: 10px;">` : '<div style="background: #ecf0f1; border-radius: 10px; padding: 2rem; text-align: center;">📦 No Image Available</div>'}
+                                ${imageHtml}
                                 <div style="background: #ecf0f1; border-radius: 10px; padding: 1rem; text-align: center; margin-top: 1rem;">
                                     <div class="product-price" style="font-size: 2rem;">${parseInt(product.price).toLocaleString()} ETB</div>
                                     <div class="product-rating">⭐ ${product.average_rating || 0}/5 (${product.total_reviews || 0} reviews)</div>
@@ -670,7 +852,7 @@
                 return;
             }
             
-            fetch(`/api/products/${productId}/reviews/`, {
+            fetch(API_BASE + `/api/products/${productId}/reviews/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -689,20 +871,20 @@
             });
         }
         
-        function addToCart(productId) {
+        function addToCart(productId, quantity = 1) {
             if (!token) {
                 showMessage('Please login first', 'error');
                 showLogin();
                 return;
             }
             
-            fetch('/api/cart/add/', {
+            fetch(API_BASE + '/api/cart/add/', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({product_id: productId, quantity: 1})
+                body: JSON.stringify({product_id: productId, quantity: quantity})
             })
             .then(r => r.json())
             .then(data => {
@@ -717,7 +899,7 @@
                 return;
             }
             
-            fetch('/api/wishlist/add/', {
+            fetch(API_BASE + '/api/wishlist/add/', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -731,6 +913,29 @@
             });
         }
         
+        function removeFromWishlist(wishlistId) {
+            fetch(API_BASE + '/api/wishlist/remove/' + wishlistId + '/', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showMessage('✅ Removed from wishlist', 'success');
+                    showWishlist();
+                } else {
+                    return response.json().then(data => {
+                        showMessage('Failed to remove: ' + (data.error || 'Unknown error'), 'error');
+                    });
+                }
+            })
+            .catch(error => {
+                showMessage('Error removing from wishlist', 'error');
+            });
+        }
+        
         function showCart() {
             if (!token) {
                 showMessage('Please login first', 'error');
@@ -740,7 +945,7 @@
             
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading cart...</div>';
             
-            fetch('/api/cart/', {headers: {'Authorization': `Bearer ${token}`}})
+            fetch(API_BASE + '/api/cart/', {headers: {'Authorization': `Bearer ${token}`}})
                 .then(r => r.json())
                 .then(cart => {
                     let html = '<h2>🛒 Your Shopping Cart</h2>';
@@ -773,7 +978,7 @@
         }
         
         function removeFromCart(itemId) {
-            fetch(`/api/cart/remove/${itemId}/`, {
+            fetch(API_BASE + `/api/cart/remove/${itemId}/`, {
                 method: 'DELETE',
                 headers: {'Authorization': `Bearer ${token}`}
             })
@@ -792,7 +997,7 @@
             
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading wishlist...</div>';
             
-            fetch('/api/wishlist/', {headers: {'Authorization': `Bearer ${token}`}})
+            fetch(API_BASE + '/api/wishlist/', {headers: {'Authorization': `Bearer ${token}`}})
                 .then(r => r.json())
                 .then(items => {
                     let html = '<h2>❤️ Your Wishlist</h2>';
@@ -801,12 +1006,18 @@
                     } else {
                         html += '<div class="products-grid">';
                         items.forEach(item => {
+                            let imageHtml = '<div class="product-image-container" style="height:150px;"><span>📦 No Image</span></div>';
+                            if (item.product_details.image_url) {
+                                imageHtml = `<div class="product-image-container" style="height:150px;"><img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+                            }
+                            
                             html += `
                                 <div class="product-card">
-                                    ${item.product_details.image ? `<img src="${item.product_details.image}" class="product-image">` : '<div class="product-image" style="display: flex; align-items: center; justify-content: center;">📦 No Image</div>'}
+                                    ${imageHtml}
                                     <div class="product-title">${item.product_details.name}</div>
                                     <div class="product-price">${parseInt(item.product_details.price).toLocaleString()} ETB</div>
                                     <button class="btn btn-primary" onclick="addToCart(${item.product_details.id})">Add to Cart</button>
+                                    <button class="btn btn-danger" onclick="removeFromWishlist(${item.product_details.id})">Remove</button>
                                 </div>
                             `;
                         });
@@ -825,7 +1036,7 @@
             
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading orders...</div>';
             
-            fetch('/api/orders/', {headers: {'Authorization': `Bearer ${token}`}})
+            fetch(API_BASE + '/api/orders/', {headers: {'Authorization': `Bearer ${token}`}})
                 .then(r => r.json())
                 .then(orders => {
                     let html = '<h2>📋 Your Orders</h2>';
@@ -841,7 +1052,8 @@
                                         Date: ${order.created_at.substring(0, 10)}
                                     </div>
                                     <div>
-                                        Total: ${parseInt(order.total).toLocaleString()} ETB
+                                        Total: ${parseInt(order.total).toLocaleString()} ETB<br>
+                                        ${order.status === 'pending' ? `<button class="btn btn-danger" onclick="cancelOrder('${order.order_number}')">Cancel Order</button>` : ''}
                                     </div>
                                 </div>
                             `;
@@ -851,95 +1063,231 @@
                 });
         }
         
-        function checkout() {
-            const orderData = {
-                payment_method: 'cash',
-                full_name: 'Customer',
-                phone_number: '0912345678',
-                address: 'Addis Ababa',
-                city: 'Addis Ababa',
-                delivery_fee: 100
-            };
+        function cancelOrder(orderNumber) {
+            if (!confirm('Are you sure you want to cancel this order?')) {
+                return;
+            }
             
-            fetch('/api/orders/', {
-                method: 'POST',
+            fetch(API_BASE + '/api/orders/' + orderNumber + '/', {
+                method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(orderData)
+                body: JSON.stringify({status: 'cancelled'})
             })
-            .then(r => r.json())
+            .then(response => response.json())
             .then(data => {
-                if (data.order_number) {
-                    showMessage(`✅ Order ${data.order_number} created!`, 'success');
+                if (data.message) {
+                    showMessage('✅ Order cancelled successfully', 'success');
                     showOrders();
                 } else {
-                    showMessage('Checkout failed', 'error');
+                    showMessage('Failed to cancel: ' + (data.error || 'Unknown error'), 'error');
                 }
+            })
+            .catch(error => {
+                showMessage('Failed to cancel order', 'error');
             });
         }
         
-        function showSellerDashboard() {
+        async function showSellerDashboard() {
             if (!token) {
                 showMessage('Please login first', 'error');
                 showLogin();
                 return;
             }
-            
-            document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading dashboard...</div>';
-            
-            Promise.all([
-                fetch('/api/seller/dashboard/', {headers: {'Authorization': `Bearer ${token}`}}).then(r => r.json()),
-                fetch('/api/seller/products/', {headers: {'Authorization': `Bearer ${token}`}}).then(r => r.json())
-            ]).then(([dashboard, products]) => {
+
+            document.getElementById('dynamic-content').innerHTML =
+                '<div class="loading">Loading dashboard...</div>';
+
+            try {
+                // Dashboard
+                const dashRes = await fetch(API_BASE + '/api/seller/dashboard/', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const dashboard = await dashRes.json();
+
+                // Products
+                const prodRes = await fetch(API_BASE + '/api/seller/products/', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const products = await prodRes.json();
+
+                console.log("PRODUCTS:", products); // DEBUG
+
                 let html = `
                     <h1>📊 Seller Dashboard</h1>
+
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <h3>📦 Products</h3>
-                            <p>${dashboard.total_products || 0}</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>💰 Revenue</h3>
-                            <p>${parseInt(dashboard.total_revenue || 0).toLocaleString()} ETB</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>⭐ Rating</h3>
-                            <p>${dashboard.average_rating || 0}/5</p>
-                        </div>
+                        <div class="stat-card"><h3>📦 Products</h3><p>${dashboard.total_products || 0}</p></div>
+                        <div class="stat-card"><h3>💰 Revenue</h3><p>${parseInt(dashboard.total_revenue || 0).toLocaleString()} ETB</p></div>
+                        <div class="stat-card"><h3>⭐ Rating</h3><p>${dashboard.average_rating || 0}/5</p></div>
                     </div>
+
                     <h2>Your Products</h2>
-                    <button class="btn btn-success" onclick="showAddProduct()" style="margin-bottom: 1rem;">➕ Add New Product</button>
+                    <button class="btn btn-success" onclick="showAddProduct()">➕ Add New Product</button>
+
                     <div class="products-grid">
                 `;
-                
-                if (products.length === 0) {
-                    html += '<p>No products yet. Click "Add New Product" to get started.</p>';
-                } else {
-                    products.forEach(product => {
-                        html += `
-                            <div class="product-card">
-                                ${product.image ? `<img src="${product.image}" class="product-image">` : '<div class="product-image" style="display: flex; align-items: center; justify-content: center;">📦 No Image</div>'}
-                                <div class="product-title">${product.name}</div>
-                                <div class="product-price">${parseInt(product.price).toLocaleString()} ETB</div>
-                                <p>Stock: ${product.quantity || 0}</p>
-                            </div>
+
+                products.forEach(product => {
+
+                    // ✅ FIXED IMAGE LOGIC (MULTIPLE IMAGES SUPPORT)
+                    let imageHtml = `
+                        <div style="
+                            width:100%;
+                            height:180px;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            background:#ecf0f1;
+                            border-radius:5px;
+                        ">
+                            📦 No Image
+                        </div>
+                    `;
+
+                    if (product.images && product.images.length > 0) {
+                        imageHtml = `
+                            <img src="${product.images[0].image_url}"
+                                style="width:100%; height:180px; object-fit:cover; border-radius:5px;">
                         `;
-                    });
-                }
-                
+                    }
+
+                    html += `
+                        <div class="product-card">
+                            ${imageHtml}
+
+                            <div class="product-title">${product.name}</div>
+
+                            <div class="product-price">
+                                ${parseInt(product.price).toLocaleString()} ETB
+                            </div>
+
+                            <p>Stock: ${product.quantity || 0}</p>
+
+                            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                                <button class="btn btn-danger" onclick="deleteProduct(${product.id})">
+                                    🗑️ Delete
+                                </button>
+                                <button class="btn" onclick="editProduct(${product.id})">
+                                    ✏️ Edit
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
                 html += `</div>`;
+
                 document.getElementById('dynamic-content').innerHTML = html;
-            }).catch(() => {
-                document.getElementById('dynamic-content').innerHTML = '<p>You need to be a seller to view this page. Contact admin to become a seller.</p>';
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('dynamic-content').innerHTML =
+                    '<p>Error loading dashboard. Please refresh.</p>';
+            }
+        }
+
+        // Add delete product function
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                fetch(API_BASE + `/api/products/${productId}/`, {
+                    method: 'DELETE',
+                    headers: {'Authorization': `Bearer ${token}`}
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showMessage('✅ Product deleted successfully!', 'success');
+                        showSellerDashboard();
+                    } else {
+                        showMessage('Failed to delete product', 'error');
+                    }
+                });
+            }
+        }
+
+        
+        function editProduct(productId) {
+            // Fetch product details and populate form
+            fetch(API_BASE + `/api/products/${productId}/`)
+                .then(r => r.json())
+                .then(product => {
+                    let html = `
+                        <div style="background: white; border-radius: 10px; padding: 2rem; max-width: 500px; margin: 0 auto;">
+                            <h2>✏️ Edit Product</h2>
+                            <div class="form-group">
+                                <label>Product Name</label>
+                                <input type="text" id="edit-product-name" value="${product.name}">
+                            </div>
+                            <div class="form-group">
+                                <label>Price (ETB)</label>
+                                <input type="number" id="edit-product-price" value="${product.price}">
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="edit-product-description" rows="3">${product.description || ''}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" id="edit-product-quantity" value="${product.quantity}">
+                            </div>
+                            <div class="form-group">
+                                <label>Condition</label>
+                                <select id="edit-product-condition">
+                                    <option value="new" ${product.condition === 'new' ? 'selected' : ''}>New</option>
+                                    <option value="like_new" ${product.condition === 'like_new' ? 'selected' : ''}>Like New</option>
+                                    <option value="good" ${product.condition === 'good' ? 'selected' : ''}>Good</option>
+                                    <option value="fair" ${product.condition === 'fair' ? 'selected' : ''}>Fair</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button class="btn btn-success" onclick="updateProduct(${productId})">Update Product</button>
+                                <button class="btn" onclick="showSellerDashboard()">Cancel</button>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('dynamic-content').innerHTML = html;
+                });
+        }
+
+        // Add update product function
+        function updateProduct(productId) {
+            const updatedData = {
+                name: document.getElementById('edit-product-name').value,
+                price: parseFloat(document.getElementById('edit-product-price').value),
+                description: document.getElementById('edit-product-description').value,
+                quantity: parseInt(document.getElementById('edit-product-quantity').value),
+                condition: document.getElementById('edit-product-condition').value
+            };
+            
+            fetch(API_BASE + `/api/products/${productId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedData)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.id) {
+                    showMessage('✅ Product updated successfully!', 'success');
+                    showSellerDashboard();
+                } else {
+                    showMessage('Error updating product', 'error');
+                }
             });
         }
         
         function showAddProduct() {
             let html = `
-                <h2>➕ Add New Product</h2>
-                <div class="form-container">
+                <div style="background: white; border-radius: 10px; padding: 2rem; max-width: 500px; margin: 0 auto;">
+                    <h2>➕ Add New Product</h2>
                     <div class="form-group">
                         <label>Product Name</label>
                         <input type="text" id="product-name" placeholder="Enter product name">
@@ -973,8 +1321,10 @@
                         <label>Category ID</label>
                         <input type="number" id="product-category" value="1">
                     </div>
-                    <button class="btn btn-success" onclick="createProductWithImage()">Create Product</button>
-                    <button class="btn" onclick="showSellerDashboard()">Cancel</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-success" onclick="createProductWithImage()">Create Product</button>
+                        <button class="btn" onclick="showSellerDashboard()">Cancel</button>
+                    </div>
                 </div>
             `;
             document.getElementById('dynamic-content').innerHTML = html;
@@ -988,7 +1338,6 @@
             formData.append('quantity', parseInt(document.getElementById('product-quantity').value));
             formData.append('condition', document.getElementById('product-condition').value);
             formData.append('category', parseInt(document.getElementById('product-category').value));
-            formData.append('slug', document.getElementById('product-name').value.toLowerCase().replace(/ /g, '-'));
             formData.append('is_available', true);
             
             const imageFile = document.getElementById('product-image').files[0];
@@ -996,14 +1345,14 @@
                 formData.append('image', imageFile);
             }
             
-            fetch('/api/products/', {
+            fetch(API_BASE + '/api/products/', {
                 method: 'POST',
                 headers: {'Authorization': `Bearer ${token}`},
                 body: formData
             })
             .then(r => r.json())
             .then(data => {
-                if (data.id) {
+                if (data.id || data.product) {
                     showMessage('✅ Product created successfully!', 'success');
                     showSellerDashboard();
                 } else {
@@ -1015,7 +1364,72 @@
             });
         }
         
+        function checkout() {
+            if (!token) {
+                showMessage('Please login first', 'error');
+                showLogin();
+                return;
+            }
+            
+            fetch(API_BASE + '/api/cart/', {headers: {'Authorization': `Bearer ${token}`}})
+                .then(r => r.json())
+                .then(cart => {
+                    if (!cart.items || cart.items.length === 0) {
+                        showMessage('Your cart is empty!', 'error');
+                        return;
+                    }
+                    
+                    const total = parseInt(cart.total_price) + 100;
+                    document.getElementById('checkout-total').innerText = total.toLocaleString();
+                    document.getElementById('checkoutModal').style.display = 'block';
+                });
+        }
+        
+        function submitOrder() {
+            const name = document.getElementById('checkout-name').value;
+            const phone = document.getElementById('checkout-phone').value;
+            const address = document.getElementById('checkout-address').value;
+            const city = document.getElementById('checkout-city').value;
+            const paymentMethod = document.getElementById('checkout-payment').value;
+            
+            if (!name || !phone || !address) {
+                showMessage('Please fill all required fields', 'error');
+                return;
+            }
+            
+            const orderData = {
+                payment_method: paymentMethod,
+                full_name: name,
+                phone_number: phone,
+                address: address,
+                city: city,
+                delivery_fee: 100
+            };
+            
+            showMessage('Processing order...', 'success');
+            
+            fetch(API_BASE + '/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.order_number) {
+                    closeModal('checkoutModal');
+                    showMessage(`✅ Order ${data.order_number} created! Total: ${parseInt(data.total).toLocaleString()} ETB`, 'success');
+                    showOrders();
+                } else {
+                    showMessage('Checkout failed: ' + JSON.stringify(data), 'error');
+                }
+            });
+        }
+        
         function showLogin() {
+            document.getElementById('registerModal').style.display = 'none';
             document.getElementById('loginModal').style.display = 'block';
         }
         
@@ -1028,7 +1442,7 @@
                 return;
             }
             
-            fetch('/api/auth/login/', {
+            fetch(API_BASE + '/api/auth/login/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({username, password})
@@ -1040,7 +1454,7 @@
                     localStorage.setItem('token', token);
                     closeModal('loginModal');
                     document.getElementById('auth-buttons').style.display = 'none';
-                    document.getElementById('user-info').style.display = 'flex';
+                    document.getElementById('user-info').style.display = 'block';
                     fetchUserInfo();
                     showMessage('✅ Login successful! Welcome ' + username, 'success');
                     showHome();
@@ -1054,6 +1468,28 @@
                 showMessage('Login failed. Make sure server is running.', 'error');
             });
         }
+        function showForgotPassword() {
+            const email = prompt('Enter your email address:');
+            if (email && email.trim()) {
+                fetch(API_BASE + '/api/password_reset/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email: email})
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showMessage('✅ Password reset link sent to your email', 'success');
+                        closeModal('loginModal');
+                    } else {
+                        showMessage('❌ Email not found. Please check and try again.', 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error sending reset link. Please try again.', 'error');
+                });
+            }
+        }
+
         
         function logout() {
             localStorage.removeItem('token');
@@ -1061,61 +1497,91 @@
             document.getElementById('auth-buttons').style.display = 'flex';
             document.getElementById('user-info').style.display = 'none';
             document.getElementById('seller-menu').style.display = 'none';
+            document.getElementById('admin-menu').style.display = 'none';
             document.getElementById('username-display').innerHTML = '';
             showMessage('Logged out successfully', 'success');
             showHome();
         }
         
         function showRegister() {
+            document.getElementById('loginModal').style.display = 'none';
             document.getElementById('registerModal').style.display = 'block';
         }
         
         function register() {
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
             const password = document.getElementById('reg-password').value;
             const password2 = document.getElementById('reg-password2').value;
             
+            if (!username) {
+                showMessage('Please enter username', 'error');
+                return;
+            }
+            if (!email) {
+                showMessage('Please enter email', 'error');
+                return;
+            }
+            if (!phone) {
+                showMessage('Please enter phone number', 'error');
+                return;
+            }
+            if (!password) {
+                showMessage('Please enter password', 'error');
+                return;
+            }
             if (password !== password2) {
                 showMessage('Passwords do not match', 'error');
                 return;
             }
             
-            if (password.length < 8) {
-                showMessage('Password must be at least 8 characters', 'error');
-                return;
-            }
-            
             const data = {
-                username: document.getElementById('reg-username').value,
-                email: document.getElementById('reg-email').value,
-                phone_number: document.getElementById('reg-phone').value,
+                username: username,
+                email: email,
+                phone_number: phone,
                 password: password,
                 password_confirm: password2,
                 is_seller: document.getElementById('reg-is-seller').checked
             };
             
-            fetch('/api/auth/register/', {
+            fetch(API_BASE + '/api/auth/register/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             })
             .then(r => r.json())
             .then(data => {
+                // Check if access token exists (successful registration)
                 if (data.access) {
                     token = data.access;
                     localStorage.setItem('token', token);
                     closeModal('registerModal');
                     document.getElementById('auth-buttons').style.display = 'none';
-                    document.getElementById('user-info').style.display = 'flex';
+                    document.getElementById('user-info').style.display = 'block';
                     fetchUserInfo();
                     showMessage('✅ Registration successful! Welcome ' + data.user.username, 'success');
                     showHome();
+                    // Clear form
+                    document.getElementById('reg-username').value = '';
+                    document.getElementById('reg-email').value = '';
+                    document.getElementById('reg-phone').value = '';
+                    document.getElementById('reg-password').value = '';
+                    document.getElementById('reg-password2').value = '';
+                    document.getElementById('reg-is-seller').checked = false;
                 } else {
+                    // Show error message from response
                     let errorMsg = 'Registration failed';
                     if (data.username) errorMsg += ': ' + data.username[0];
                     else if (data.email) errorMsg += ': ' + data.email[0];
                     else if (data.password) errorMsg += ': ' + data.password[0];
+                    else errorMsg += ': ' + JSON.stringify(data);
                     showMessage(errorMsg, 'error');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Registration failed. Please try again.', 'error');
             });
         }
         
@@ -1131,11 +1597,6 @@
             document.getElementById(modalId).style.display = 'none';
         }
         
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
         function showAdminDashboard() {
             if (!token) {
                 showMessage('Please login first', 'error');
@@ -1145,7 +1606,7 @@
             
             document.getElementById('dynamic-content').innerHTML = '<div class="loading">Loading admin dashboard...</div>';
             
-            fetch('/api/admin/dashboard/', {
+            fetch(API_BASE + '/api/admin/dashboard/', {
                 headers: {'Authorization': `Bearer ${token}`}
             })
             .then(r => r.json())
@@ -1237,6 +1698,12 @@
             .catch(error => {
                 document.getElementById('dynamic-content').innerHTML = '<p>You need admin privileges to view this page.</p>';
             });
+        }
+        
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
         }
     </script>
 </body>

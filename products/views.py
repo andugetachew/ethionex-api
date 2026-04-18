@@ -36,8 +36,6 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ProductListCreateView(generics.ListCreateAPIView):
-    """List all products or create a new product"""
-
     queryset = Product.objects.filter(is_available=True)
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -58,6 +56,19 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(seller=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(
+                {
+                    "message": "Product created successfully!",
+                    "product": serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -97,16 +108,40 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class SellerProductsView(generics.ListAPIView):
-    """List products by specific seller"""
-
     serializer_class = ProductSerializer
 
     def get_queryset(self):
         seller_id = self.kwargs["seller_id"]
         return Product.objects.filter(seller_id=seller_id, is_available=True)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = ProductSerializer(
+            queryset, many=True, context={"request": request}
+        )
+        result = []
+        for product in queryset:
+            # Build the full image URL
+            image_url = None
+            if product.image:
+                image_url = request.build_absolute_uri(product.image.url)
 
-# Add these views at the bottom of the file
+            result.append(
+                {
+                    "id": product.id,
+                    "name": product.name,
+                    "price": str(product.price),
+                    "quantity": product.quantity,
+                    "condition": product.condition,
+                    "description": product.description,
+                    "image_url": image_url,
+                    "seller": product.seller.username,
+                    "created_at": product.created_at,
+                }
+            )
+        return Response(result)
+
+
 class ReviewListCreateView(generics.ListCreateAPIView):
     """List reviews for a product or create a new review"""
 
@@ -155,7 +190,6 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
 #
 
 
-# Add these views at the bottom
 class WishlistListView(APIView):
     """View user's wishlist"""
 
@@ -210,8 +244,6 @@ class AddToWishlistView(APIView):
 
 
 class RemoveFromWishlistView(APIView):
-    """Remove product from wishlist"""
-
     permission_classes = [permissions.IsAuthenticated]
 
     def delete(self, request, product_id):
@@ -219,18 +251,13 @@ class RemoveFromWishlistView(APIView):
             wishlist_item = Wishlist.objects.get(
                 user=request.user, product_id=product_id
             )
-            product_name = wishlist_item.product.name
             wishlist_item.delete()
-
             return Response(
-                {"message": f"{product_name} removed from your wishlist"},
-                status=status.HTTP_200_OK,
+                {"message": "Removed from wishlist"}, status=status.HTTP_200_OK
             )
-
         except Wishlist.DoesNotExist:
             return Response(
-                {"error": "Product not found in your wishlist"},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "Item not found"}, status=status.HTTP_400_NOT_FOUND
             )
 
 

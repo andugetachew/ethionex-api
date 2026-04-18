@@ -3,5 +3,7 @@ from . import views
 
 urlpatterns = [
     path("", views.OrderListCreateView.as_view(), name="orders"),
-    path("<int:order_id>/", views.OrderDetailView.as_view(), name="order-detail"),
+    path(
+        "<str:order_number>/", views.OrderDetailView.as_view(), name="order-detail"
+    ),  # Change int to str
 ]

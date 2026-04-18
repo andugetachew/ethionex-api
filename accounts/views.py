@@ -9,8 +9,6 @@ from ethionex_api.email_utils import send_welcome_email
 
 
 class RegisterView(generics.CreateAPIView):
-    """User registration view"""
-
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
@@ -19,7 +17,10 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            send_welcome_email(user)
+            user.is_email_verified = True
+            user.save()
+
+            # Login immediately
             refresh = RefreshToken.for_user(user)
             return Response(
                 {
@@ -33,8 +34,6 @@ class RegisterView(generics.CreateAPIView):
 
 
 class LoginView(APIView):
-    """User login view"""
-
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
@@ -45,6 +44,7 @@ class LoginView(APIView):
             user = authenticate(username=username, password=password)
 
             if user:
+
                 refresh = RefreshToken.for_user(user)
                 return Response(
                     {
@@ -74,3 +74,15 @@ class ProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        user.first_name = request.data.get("first_name", user.first_name)
+        user.last_name = request.data.get("last_name", user.last_name)
+        user.phone_number = request.data.get("phone_number", user.phone_number)
+        user.save()
+        return Response(UserSerializer(user).data)

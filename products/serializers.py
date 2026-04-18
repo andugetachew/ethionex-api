@@ -1,7 +1,20 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage
-from .models import Category, Product, ProductImage, Review
 from .models import Category, Product, ProductImage, Review, Wishlist
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(source="products.count", read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ["id", "name", "slug", "description", "products_count", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ["id", "image", "is_primary"]
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -21,23 +34,32 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "user", "created_at", "updated_at"]
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    """Category serializer"""
-
-    products_count = serializers.IntegerField(source="products.count", read_only=True)
-
+class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
-        fields = ["id", "name", "slug", "description", "products_count", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        model = Product
+        fields = [
+            "category",
+            "name",
+            "slug",
+            "description",
+            "price",
+            "condition",
+            "quantity",
+            "image",
+            "is_available",
+        ]
+        extra_kwargs = {"slug": {"required": False}, "image": {"required": False}}
 
-
-class ProductImageSerializer(serializers.ModelSerializer):
-    """Product image serializer"""
-
-    class Meta:
-        model = ProductImage
-        fields = ["id", "image", "is_primary"]
+    def create(self, validated_data):
+        if "slug" not in validated_data or not validated_data["slug"]:
+            base_slug = validated_data["name"].lower().replace(" ", "-")
+            slug = base_slug
+            counter = 1
+            while Product.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            validated_data["slug"] = slug
+        return super().create(validated_data)
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -48,7 +70,7 @@ class ProductSerializer(serializers.ModelSerializer):
     average_rating = serializers.ReadOnlyField()
     total_reviews = serializers.ReadOnlyField()
     reviews = ReviewSerializer(many=True, read_only=True)
-    image_url = serializers.SerializerMethodField()  # This exists
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -67,7 +89,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "image",
             "image_url",
             "is_available",
-            "views_count",  # ← Added image_url here
+            "views_count",
             "average_rating",
             "total_reviews",
             "reviews",
@@ -82,28 +104,9 @@ class ProductSerializer(serializers.ModelSerializer):
         return None
 
 
-class ProductCreateUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for creating/updating products"""
-
-    class Meta:
-        model = Product
-        fields = [
-            "category",
-            "name",
-            "slug",
-            "description",
-            "price",
-            "condition",
-            "quantity",
-            "image",
-            "is_available",
-        ]
-
-
 class WishlistSerializer(serializers.ModelSerializer):
     product_details = ProductSerializer(source="product", read_only=True)
 
     class Meta:
         model = Wishlist
         fields = ["id", "product", "product_details", "added_at"]
-        read_only_fields = ["id", "added_at"]

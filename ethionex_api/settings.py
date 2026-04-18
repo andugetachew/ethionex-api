@@ -145,3 +145,21 @@ SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
     "JSON_EDITOR": True,
 }
+# ========== EMAIL CONFIGURATION ==========
+
+# For development (prints emails to terminal)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# For production (uncomment and use Gmail)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-16-character-app-password'
+
+# Default from email
+DEFAULT_FROM_EMAIL = "EthioNex Marketplace <noreply@ethionex.com>"
+
+# Frontend URL (no trailing slash)
+FRONTEND_URL = "http://127.0.0.1:8000"

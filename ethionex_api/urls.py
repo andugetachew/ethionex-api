@@ -10,6 +10,8 @@ from drf_yasg import openapi
 # Import views
 from .views import index
 from .reports_views import ExportOrdersCSV, ExportProductsCSV
+from django.views.generic import TemplateView
+
 
 # Swagger schema view
 schema_view = get_schema_view(
@@ -68,7 +70,12 @@ urlpatterns = [
         "api/password_reset/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
-    path("api/mobile/", include("ethionex_api.mobile_urls")),  # Correct
+    path("api/mobile/", include("ethionex_api.mobile_urls")),
+    path(
+        "test-login/",
+        TemplateView.as_view(template_name="test_login.html"),
+        name="test-login",
+    ),
 ]
 
 if settings.DEBUG:
