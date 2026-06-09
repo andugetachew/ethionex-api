@@ -36,7 +36,7 @@
 ## 📊 Quality Metrics
 
 
-> A production-ready multi-vendor e-commerce marketplace REST API — buyers browse and place orders, sellers manage inventory and track revenue, admins oversee the platform. Built with Django REST Framework, PostgreSQL, Redis, Celery, Django Channels (WebSockets), and Docker.
+> A production-ready multi-vendor e-commerce marketplace REST API — buyers browse and order, sellers manage inventory and track revenue, admins oversee the platform. Built with Django REST Framework, Redis, Celery, and Django Channels.
 
 ---
 
