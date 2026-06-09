@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from products.models import Product
 from cart.models import Cart
+from django.utils.crypto import get_random_string
 
 
 class Order(models.Model):
@@ -48,6 +49,50 @@ class Order(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Order Tracking Fields (add these)
+    tracking_number = models.CharField(max_length=100, blank=True, null=True)
+    shipped_at = models.DateTimeField(blank=True, null=True)
+    delivered_at = models.DateTimeField(blank=True, null=True)
+
+    # Order Status History
+    status_history = models.JSONField(default=list, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = f"ORD-{get_random_string(8).upper()}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Order {self.order_number}"
+
+    def add_status_history(self, status, note=""):
+        """Add status change to history"""
+        from django.utils import timezone
+
+        history_entry = {
+            "status": status,
+            "timestamp": timezone.now().isoformat(),
+            "note": note,
+        }
+        if not self.status_history:
+            self.status_history = []
+        self.status_history.append(history_entry)
+        self.save()
+
+    def update_status(self, new_status, note=""):
+        """Update order status with history tracking"""
+        self.status = new_status
+        self.add_status_history(new_status, note)
+
+        # Update timestamps based on status
+        from django.utils import timezone
+
+        if new_status == "shipped" and not self.shipped_at:
+            self.shipped_at = timezone.now()
+        elif new_status == "delivered" and not self.delivered_at:
+            self.delivered_at = timezone.now()
+
+        self.save()
 
     class Meta:
         ordering = ["-created_at"]
@@ -84,3 +129,19 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.price * self.quantity
+
+
+class OrderStatusLog(models.Model):
+    order = models.ForeignKey(
+        "Order", on_delete=models.CASCADE, related_name="status_logs"
+    )
+    old_status = models.CharField(max_length=20)
+    new_status = models.CharField(max_length=20)
+    reason = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order {self.order.id}: {self.old_status} → {self.new_status}"

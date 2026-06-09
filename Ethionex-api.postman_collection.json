@@ -1,0 +1,652 @@
+{
+    "info": {
+        "name": "EthioNex Marketplace API",
+        "description": "Core API endpoints for the EthioNex digital marketplace. Includes authentication, products, cart, orders, and seller dashboard.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Authentication",
+            "item": [
+                {
+                    "name": "Register User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/register/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"buyer1\",\n  \"email\": \"buyer1@example.com\",\n  \"password\": \"Test@1234\",\n  \"password2\": \"Test@1234\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Login (Get Token)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/login/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"buyer1\",\n  \"password\": \"Test@1234\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get My Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/profile/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "profile"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Products",
+            "item": [
+                {
+                    "name": "List Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/products/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "products"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/products/?search=laptop&ordering=-price",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "products"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "laptop"
+                                },
+                                {
+                                    "key": "ordering",
+                                    "value": "-price"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Filter by Category",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/products/?category=1",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "products"
+                            ],
+                            "query": [
+                                {
+                                    "key": "category",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Single Product",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/products/1/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "products",
+                                "1"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/categories/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "categories"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Shopping Cart",
+            "item": [
+                {
+                    "name": "View Cart",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/cart/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "cart"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add to Cart",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/cart/add/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "cart",
+                                "add"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 2\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Update Cart Item",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/cart/update/1/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "cart",
+                                "update",
+                                "1"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quantity\": 3\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Remove from Cart",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/cart/remove/1/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "cart",
+                                "remove",
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Orders",
+            "item": [
+                {
+                    "name": "Create Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/orders/create/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "orders",
+                                "create"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"shipping_address\": \"123 Main St, Addis Ababa\",\n  \"phone\": \"0912345678\",\n  \"notes\": \"Leave at gate\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "My Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/orders/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "orders"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Track Order",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/orders/track/?order_number=ABC123XYZ",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "orders",
+                                "track"
+                            ],
+                            "query": [
+                                {
+                                    "key": "order_number",
+                                    "value": "ABC123XYZ"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Single Order",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/orders/1/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "orders",
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Seller Dashboard",
+            "item": [
+                {
+                    "name": "Seller Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/seller/stats/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "seller",
+                                "stats"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Seller Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/seller/products/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "seller",
+                                "products"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Product (Seller)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/products/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "products"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Premium Ebook\",\n  \"description\": \"Learn Django in 30 days\",\n  \"price\": \"29.99\",\n  \"stock_quantity\": 50,\n  \"category\": 1\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Admin Dashboard",
+            "item": [
+                {
+                    "name": "Admin Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/stats/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "stats"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Admin Users List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/users/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "users"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Sales Report",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/reports/sales/?period=month",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "reports",
+                                "sales"
+                            ],
+                            "query": [
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Top Products Report",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/reports/top-products/?limit=5",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "reports",
+                                "top-products"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Order Status",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{ACCESS_TOKEN}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/orders/admin/1/update-status/",
+                            "host": [
+                                "{{BASE_URL}}"
+                            ],
+                            "path": [
+                                "api",
+                                "orders",
+                                "admin",
+                                "1",
+                                "update-status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"shipped\",\n  \"tracking_number\": \"TRK123456\",\n  \"note\": \"Order dispatched\"\n}"
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "BASE_URL",
+            "value": "http://127.0.0.1:8000"
+        },
+        {
+            "key": "ACCESS_TOKEN",
+            "value": ""
+        }
+    ]
+}

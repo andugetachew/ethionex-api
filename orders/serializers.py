@@ -103,3 +103,15 @@ class CreateOrderSerializer(serializers.Serializer):
     sub_city = serializers.CharField(max_length=100, required=False, allow_blank=True)
     delivery_fee = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes = serializers.CharField(required=False, allow_blank=True)
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_detail = ProductSerializer(source="product", read_only=True)
+    subtotal = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = ["id", "product", "product_detail", "quantity", "price", "subtotal"]
+
+    def get_subtotal(self, obj):
+        return obj.quantity * obj.price

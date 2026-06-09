@@ -1,0 +1,276 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-8.4.1, pluggy-1.6.0 -- c:\Users\HP\ethionex-api\venv\Scripts\python.exe
+cachedir: .pytest_cache
+django: version: 5.2.5, settings: tests.settings_test (from ini)
+rootdir: c:\Users\HP\ethionex-api
+configfile: pytest.ini
+plugins: Faker-40.18.0, cov-7.1.0, django-4.11.1
+collecting ... collected 56 items
+
+tests/integration/test_auth_flow.py::TestAuthFlow::test_complete_auth_flow PASSED [  1%]
+tests/integration/test_cart_checkout.py::TestCartCheckoutFlow::test_complete_purchase_flow PASSED [  3%]
+tests/integration/test_inventory.py::TestInventoryProtection::test_cannot_order_more_than_stock PASSED [  5%]
+tests/integration/test_inventory.py::TestInventoryProtection::test_stock_decreases_after_order PASSED [  7%]
+tests/integration/test_inventory.py::TestInventoryProtection::test_cannot_order_zero_stock_product PASSED [  8%]
+tests/integration/test_notification.py::TestNotifications::test_order_confirmation_email_sent PASSED [ 10%]
+tests/integration/test_notification.py::TestNotifications::test_welcome_email_on_registration PASSED [ 12%]
+tests/integration/test_order_workflow.py::TestOrderWorkflow::test_complete_order_flow_with_stock_update PASSED [ 14%]
+tests/integration/test_order_workflow.py::TestOrderWorkflow::test_cannot_order_more_than_available_stock PASSED [ 16%]
+tests/integration/test_order_workflow.py::TestOrderWorkflow::test_cancel_order_restores_stock PASSED [ 17%]
+tests/integration/test_order_workflow.py::TestOrderWorkflow::test_duplicate_order_prevention_idempotency PASSED [ 19%]
+tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_pending_to_paid_valid ERROR [ 21%]
+tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_pending_to_shipped_invalid ERROR [ 23%]
+tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_paid_to_processing_valid ERROR [ 25%]
+tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_processing_to_shipped_valid ERROR [ 26%]
+tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_shipped_to_delivered_valid ERROR [ 28%]
+tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_any_state_to_cancelled_before_shipped ERROR [ 30%]
+tests/integration/test_order_workflow.py::TestPermissions::test_seller_can_edit_own_product PASSED [ 32%]
+tests/integration/test_order_workflow.py::TestPermissions::test_seller_cannot_edit_others_product PASSED [ 33%]
+tests/integration/test_order_workflow.py::TestPermissions::test_buyer_cannot_access_seller_dashboard PASSED [ 35%]
+tests/integration/test_order_workflow.py::TestPermissions::test_admin_can_edit_any_product PASSED [ 37%]
+tests/integration/test_order_workflow.py::TestRateLimiting::test_login_rate_limit PASSED [ 39%]
+tests/integration/test_order_workflow.py::TestRateLimiting::test_order_rate_limit PASSED [ 41%]
+tests/integration/test_order_workflow.py::TestRateLimiting::test_review_rate_limit PASSED [ 42%]
+tests/integration/test_order_workflow.py::TestAuditLogging::test_order_status_change_logged FAILED [ 44%]
+tests/integration/test_order_workflow.py::TestAuditLogging::test_product_update_logged PASSED [ 46%]
+tests/integration/test_order_workflow.py::TestAuditLogging::test_admin_action_logged PASSED [ 48%]
+tests/integration/test_seller_dashboard.py::TestSellerDashboard::test_seller_can_view_dashboard PASSED [ 50%]
+tests/integration/test_seller_dashboard.py::TestSellerDashboard::test_dashboard_shows_correct_product_count PASSED [ 51%]
+tests/integration/test_seller_dashboard.py::TestSellerDashboard::test_buyer_cannot_access_seller_dashboard PASSED [ 53%]
+tests/performance/test_caching.py::TestCachingPerformance::test_product_list_caching PASSED [ 55%]
+tests/performance/test_caching.py::TestCachingPerformance::test_cache_invalidation_on_update PASSED [ 57%]
+tests/performance/test_rate_limits.py::TestRateLimits::test_login_rate_limit SKIPPED [ 58%]
+tests/performance/test_rate_limits.py::TestRateLimits::test_register_rate_limit SKIPPED [ 60%]
+tests/performance/test_rate_limits.py::TestRateLimits::test_order_rate_limit SKIPPED [ 62%]
+tests/performance/test_rate_limits.py::TestRateLimits::test_search_rate_limit SKIPPED [ 64%]
+tests/unit/test_models.py::TestProductModel::test_product_creation PASSED [ 66%]
+tests/unit/test_models.py::TestProductModel::test_product_str_method PASSED [ 67%]
+tests/unit/test_models.py::TestProductModel::test_product_stock_validation PASSED [ 69%]
+tests/unit/test_models.py::TestProductModel::test_product_soft_delete PASSED [ 71%]
+tests/unit/test_models.py::TestOrderModel::test_order_creation PASSED    [ 73%]
+tests/unit/test_models.py::TestOrderModel::test_order_state_transition PASSED [ 75%]
+tests/unit/test_permissions.py::TestIsSellerPermission::test_seller_has_permission PASSED [ 76%]
+tests/unit/test_permissions.py::TestIsSellerPermission::test_buyer_has_no_permission PASSED [ 78%]
+tests/unit/test_permissions.py::TestIsOwnerOrReadOnly::test_owner_can_edit PASSED [ 80%]
+tests/unit/test_products.py::ProductModelTest::test_create_product PASSED [ 82%]
+tests/unit/test_serializers.py::TestProductSerializer::test_valid_product_data PASSED [ 83%]
+tests/unit/test_serializers.py::TestProductSerializer::test_invalid_price PASSED [ 85%]
+tests/unit/test_serializers.py::TestRegisterSerializer::test_valid_registration PASSED [ 87%]
+tests/unit/test_serializers.py::TestRegisterSerializer::test_password_mismatch PASSED [ 89%]
+tests/unit/test_throttling.py::TestRateLimiting::test_login_rate_limit PASSED [ 91%]
+tests/unit/test_throttling.py::TestRateLimiting::test_register_rate_limit PASSED [ 92%]
+tests/unit/test_throttling.py::TestRateLimiting::test_order_rate_limit PASSED [ 94%]
+tests/unit/test_utils.py::TestCacheService::test_get_or_set_returns_cached_value PASSED [ 96%]
+tests/unit/test_utils.py::TestCacheService::test_invalidate_product_list PASSED [ 98%]
+tests/unit/test_utils.py::TestCacheService::test_get_product_list_key PASSED [100%]
+
+=================================== ERRORS ====================================
+___ ERROR at setup of TestOrderStateTransitions.test_pending_to_paid_valid ____
+
+self = <tests.integration.test_order_workflow.TestOrderStateTransitions object at 0x00000192D04F7290>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D100B9B0>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    @pytest.fixture(autouse=True)
+    def setup(self, auth_client, test_product, admin_user):
+        self.client = auth_client
+        self.admin = admin_user
+        self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201, f"Order creation failed: {response.data}"
+E       AssertionError: Order creation failed: {'detail': ErrorDetail(string='Request was throttled. Expected available in 48 seconds.', code='throttled')}
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:184: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+_ ERROR at setup of TestOrderStateTransitions.test_pending_to_shipped_invalid _
+
+self = <tests.integration.test_order_workflow.TestOrderStateTransitions object at 0x00000192D051C350>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D0ECFCB0>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    @pytest.fixture(autouse=True)
+    def setup(self, auth_client, test_product, admin_user):
+        self.client = auth_client
+        self.admin = admin_user
+        self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201, f"Order creation failed: {response.data}"
+E       AssertionError: Order creation failed: {'detail': ErrorDetail(string='Request was throttled. Expected available in 45 seconds.', code='throttled')}
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:184: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+__ ERROR at setup of TestOrderStateTransitions.test_paid_to_processing_valid __
+
+self = <tests.integration.test_order_workflow.TestOrderStateTransitions object at 0x00000192D051C200>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D0EE7020>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    @pytest.fixture(autouse=True)
+    def setup(self, auth_client, test_product, admin_user):
+        self.client = auth_client
+        self.admin = admin_user
+        self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201, f"Order creation failed: {response.data}"
+E       AssertionError: Order creation failed: {'detail': ErrorDetail(string='Request was throttled. Expected available in 43 seconds.', code='throttled')}
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:184: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+_ ERROR at setup of TestOrderStateTransitions.test_processing_to_shipped_valid _
+
+self = <tests.integration.test_order_workflow.TestOrderStateTransitions object at 0x00000192D051CAA0>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D0ECF710>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    @pytest.fixture(autouse=True)
+    def setup(self, auth_client, test_product, admin_user):
+        self.client = auth_client
+        self.admin = admin_user
+        self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201, f"Order creation failed: {response.data}"
+E       AssertionError: Order creation failed: {'detail': ErrorDetail(string='Request was throttled. Expected available in 42 seconds.', code='throttled')}
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:184: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+_ ERROR at setup of TestOrderStateTransitions.test_shipped_to_delivered_valid _
+
+self = <tests.integration.test_order_workflow.TestOrderStateTransitions object at 0x00000192D051D340>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D101AF00>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    @pytest.fixture(autouse=True)
+    def setup(self, auth_client, test_product, admin_user):
+        self.client = auth_client
+        self.admin = admin_user
+        self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201, f"Order creation failed: {response.data}"
+E       AssertionError: Order creation failed: {'detail': ErrorDetail(string='Request was throttled. Expected available in 40 seconds.', code='throttled')}
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:184: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+_ ERROR at setup of TestOrderStateTransitions.test_any_state_to_cancelled_before_shipped _
+
+self = <tests.integration.test_order_workflow.TestOrderStateTransitions object at 0x00000192D051DB50>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D0F91130>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    @pytest.fixture(autouse=True)
+    def setup(self, auth_client, test_product, admin_user):
+        self.client = auth_client
+        self.admin = admin_user
+        self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201, f"Order creation failed: {response.data}"
+E       AssertionError: Order creation failed: {'detail': ErrorDetail(string='Request was throttled. Expected available in 38 seconds.', code='throttled')}
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:184: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+================================== FAILURES ===================================
+______________ TestAuditLogging.test_order_status_change_logged _______________
+
+self = <tests.integration.test_order_workflow.TestAuditLogging object at 0x00000192D056CCE0>
+auth_client = <rest_framework.test.APIClient object at 0x00000192D0DE5E20>
+test_product = <Product: Test Laptop>, admin_user = <User: admin>
+
+    def test_order_status_change_logged(self, auth_client, test_product, admin_user):
+        auth_client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
+        response = auth_client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
+>       assert response.status_code == 201
+E       assert 429 == 201
+E        +  where 429 = <Response status_code=429, "application/json">.status_code
+
+tests\integration\test_order_workflow.py:325: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  django.request:log.py:253 Too Many Requests: /api/v1/orders/
+=========================== short test summary info ===========================
+FAILED tests/integration/test_order_workflow.py::TestAuditLogging::test_order_status_change_logged
+ERROR tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_pending_to_paid_valid
+ERROR tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_pending_to_shipped_invalid
+ERROR tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_paid_to_processing_valid
+ERROR tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_processing_to_shipped_valid
+ERROR tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_shipped_to_delivered_valid
+ERROR tests/integration/test_order_workflow.py::TestOrderStateTransitions::test_any_state_to_cancelled_before_shipped
+============= 1 failed, 45 passed, 4 skipped, 6 errors in 55.27s ==============

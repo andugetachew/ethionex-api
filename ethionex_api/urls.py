@@ -1,82 +1,124 @@
+"""
+EthioNex API URL Configuration
+--------------------------------
+Main entry point for all API endpoints.
+Supports API versioning (v1), documentation, and reports.
+"""
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import HttpResponse
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
-
-# Import views
-from .views import index
-from .reports_views import ExportOrdersCSV, ExportProductsCSV
-from django.views.generic import TemplateView
-
-
-# Swagger schema view
-schema_view = get_schema_view(
-    openapi.Info(
-        title="EthioNex Marketplace API",
-        default_version="v1",
-        description="API documentation for EthioNex Marketplace",
-    ),
-    public=True,
-    permission_classes=[permissions.AllowAny],
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
 )
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.http import HttpResponse
+import csv
+
+v1_urls = [
+    path("auth/", include("users.urls")),
+    path("", include("products.urls")),
+    path("cart/", include("cart.urls")),
+    path("orders/", include("orders.urls")),
+    path("seller/", include("dashboard.urls")),
+    path("admin/", include("admin_dashboard.urls")),
+]
 
 
-# Welcome view
+@api_view(["GET"])
 def welcome(request):
-    return HttpResponse(
-        """
-        <h1>Welcome to EthioNex Marketplace API</h1>
-        <p>API is running successfully! 🚀</p>
-        <p>Visit <a href="/frontend/">/frontend/</a> for the frontend interface</p>
-        <hr>
-        <h3>API Endpoints:</h3>
-        <ul>
-            <li><a href="/api/auth/register/">POST /api/auth/register/</a> - Register</li>
-            <li><a href="/api/auth/login/">POST /api/auth/login/</a> - Login</li>
-            <li><a href="/api/products/">GET /api/products/</a> - Products</li>
-            <li><a href="/api/cart/">GET /api/cart/</a> - Cart</li>
-            <li><a href="/api/orders/">GET /api/orders/</a> - Orders</li>
-            <li><a href="/api/docs/">/api/docs/</a> - Swagger Documentation</li>
-        </ul>
-    """
+    """API root endpoint - shows available resources"""
+    return Response(
+        {
+            "message": "Welcome to EthioNex API",
+            "version": "1.0.0",
+            "status": "running",
+            "endpoints": {
+                "docs": "/api/docs/",
+                "admin": "/admin/",
+                "api_root": "/api/",
+                "api_v1": "/api/v1/",
+            },
+        }
     )
 
 
+class ExportOrdersCSV(APIView):
+    """Export all orders to CSV file"""
+
+    def get(self, request):
+        from orders.models import Order
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="orders.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Order ID", "Customer", "Total", "Status", "Date"])
+
+        for order in Order.objects.all():
+            writer.writerow(
+                [
+                    order.id,
+                    order.user.username,
+                    order.total,
+                    order.status,
+                    order.created_at,
+                ]
+            )
+        return response
+
+
+class ExportProductsCSV(APIView):
+    """Export all products to CSV file"""
+
+    def get(self, request):
+        from products.models import Product
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="products.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Product ID", "Title", "Price", "Stock", "Category"])
+
+        for product in Product.objects.all():
+            writer.writerow(
+                [
+                    product.id,
+                    product.title,
+                    product.price,
+                    product.stock_quantity,
+                    product.category.name if product.category else "",
+                ]
+            )
+        return response
+
+
+schema_view = SpectacularAPIView.as_view()
+swagger_view = SpectacularSwaggerView.as_view(url_name="schema")
+redoc_view = SpectacularRedocView.as_view(url_name="schema")
+
 urlpatterns = [
-    path("", welcome, name="welcome"),
-    path("frontend/", index, name="frontend"),
     path("admin/", admin.site.urls),
-    path(
-        "api/docs/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
-    path(
-        "api/redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
-    ),
-    path("api/auth/", include("accounts.urls")),
-    path("api/", include("products.urls")),
-    path("api/cart/", include("cart.urls")),
-    path("api/orders/", include("orders.urls")),
-    path("api/seller/", include("orders.seller_urls")),
-    path("api/admin/", include("ethionex_api.admin_urls")),
-    path("api/reports/orders/", ExportOrdersCSV.as_view(), name="export-orders"),
-    path("api/reports/products/", ExportProductsCSV.as_view(), name="export-products"),
+    path("", welcome, name="welcome"),
+    path("api/", welcome, name="api-root"),
+    path("api/v1/", include(v1_urls)),
+    path("api/schema/", schema_view, name="schema"),
+    path("api/docs/", swagger_view, name="swagger-ui"),
+    path("api/redoc/", redoc_view, name="redoc"),
+    path("api/auth/", include("users.urls")),
     path(
         "api/password_reset/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
-    path("api/mobile/", include("ethionex_api.mobile_urls")),
-    path(
-        "test-login/",
-        TemplateView.as_view(template_name="test_login.html"),
-        name="test-login",
-    ),
+    path("api/reports/orders/", ExportOrdersCSV.as_view(), name="export-orders"),
+    path("api/reports/products/", ExportProductsCSV.as_view(), name="export-products"),
+    path("api/notifications/", include("notifications.urls")),
 ]
 
+
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

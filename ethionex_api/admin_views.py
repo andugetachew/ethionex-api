@@ -4,7 +4,7 @@ from rest_framework import permissions
 from django.db.models import Sum, Count, Avg
 from django.utils import timezone
 from datetime import timedelta
-from accounts.models import User
+from users.models import User
 from products.models import Product, Category, Review
 from orders.models import Order, OrderItem
 

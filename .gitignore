@@ -1,9 +1,28 @@
-echo venv/
-__pycache__/
-*.pyc
-*.sqlite3
+# Secrets
 .env
-staticfiles/
-media/
-.DS_Store
-*.log > .gitignore
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/staticfiles
+/static
+/media
+/mediafiles
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker
+*.pid

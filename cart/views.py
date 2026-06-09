@@ -24,7 +24,7 @@ class CartView(APIView):
             product_id = serializer.validated_data["product_id"]
             quantity = serializer.validated_data["quantity"]
 
-            product = get_object_or_404(Product, id=product_id, is_available=True)
+            product = get_object_or_404(Product, id=product_id, is_active=True)
             cart, _ = Cart.objects.get_or_create(user=request.user)
 
             cart_item, created = CartItem.objects.get_or_create(
@@ -37,7 +37,7 @@ class CartView(APIView):
 
             return Response(
                 {
-                    "message": f"Added {quantity} x {product.name} to cart",
+                    "message": f"Added {quantity} x {product.title} to cart",
                     "cart": CartSerializer(cart).data,
                 },
                 status=status.HTTP_200_OK,
