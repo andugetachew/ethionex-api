@@ -98,13 +98,16 @@ class TestOrderStateTransitions:
         self.client = auth_client
         self.admin = admin_user
         self.client.post(CART_ADD, {"product_id": test_product.id, "quantity": 1})
-        response = self.client.post(ORDERS, {
-            "payment_method": "cash",
-            "full_name": "Test User",
-            "phone_number": "0911234567",
-            "address": "123 Test St",
-            "city": "Addis Ababa",
-        })
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
         assert response.status_code == 201
         self.order_number = response.data["order_number"]
         self.admin_client = APIClient()
@@ -134,6 +137,7 @@ class TestOrderStateTransitions:
             ORDER_DETAIL(self.order_number), {"status": "cancelled"}, format="json"
         )
         assert response.status_code == 200
+
 
 @pytest.mark.django_db
 class TestPermissions:

@@ -29,9 +29,7 @@ class TestProductModel:
 
     def test_soft_deleted_excluded_from_active_qs(self, test_product):
         test_product.soft_delete()
-        assert not Product.objects.filter(
-            pk=test_product.pk, is_active=True
-        ).exists()
+        assert not Product.objects.filter(pk=test_product.pk, is_active=True).exists()
 
 
 @pytest.mark.django_db

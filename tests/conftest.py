@@ -132,8 +132,11 @@ def clear_cache():
     cache.clear()
     yield
     cache.clear()
+
+
 import pytest
 from orders.models import Order
+
 
 @pytest.fixture
 def order(test_user):

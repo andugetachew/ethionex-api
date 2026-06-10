@@ -46,12 +46,13 @@ class TestCacheServiceInvalidation:
         assert CacheService.get(CacheService.get_product_detail_key(1)) is None
 
     def test_invalidate_product_calls_both(self):
-            from unittest.mock import patch
-            CacheService.set(CacheService.get_product_detail_key(2), {"id": 2})
-            with patch.object(CacheService, 'invalidate_product_list'):
-                CacheService.invalidate_product(2)
-            assert CacheService.get(CacheService.get_product_detail_key(2)) is None
-    
+        from unittest.mock import patch
+
+        CacheService.set(CacheService.get_product_detail_key(2), {"id": 2})
+        with patch.object(CacheService, "invalidate_product_list"):
+            CacheService.invalidate_product(2)
+        assert CacheService.get(CacheService.get_product_detail_key(2)) is None
+
     def test_invalidate_seller_dashboard(self):
         CacheService.set(CacheService.get_seller_dashboard_key(1), {"sales": 5})
         CacheService.invalidate_seller_dashboard(1)
@@ -96,9 +97,11 @@ class TestCacheServiceCore:
 
     def test_get_or_set_miss_calls_callback(self):
         called = []
+
         def cb():
             called.append(True)
             return {"fresh": True}
+
         result = CacheService.get_or_set("miss:key", cb)
         assert result == {"fresh": True}
         assert len(called) == 1
@@ -114,36 +117,39 @@ class TestCacheServiceCore:
         """Callback returning None does not store anything"""
         CacheService.get_or_set("none:key", lambda: None)
         assert CacheService.get("none:key") is None
-        
+
     def test_delete_pattern_no_crash(self):
         from unittest.mock import patch
+
         CacheService.set("patt:1", 1)
-        with patch('utils.cache_service.cache') as mock_cache:
+        with patch("utils.cache_service.cache") as mock_cache:
             mock_cache.delete_pattern = lambda x: None
             CacheService.delete_pattern("patt:*")
 
-    
+
 class TestCacheResponseDecorator:
 
     def test_cache_response_decorator_calls_view(self):
         """cache_response decorator executes the view function"""
         call_count = 0
- 
+
         class FakeView:
             @cache_response(ttl=60, key_prefix="test_exec")
             def get(self, request):
                 nonlocal call_count
                 call_count += 1
                 from unittest.mock import MagicMock
+
                 resp = MagicMock()
                 resp.status_code = 404  # non-200 so no pickle attempt
                 return resp
- 
+
         from unittest.mock import MagicMock
+
         req = MagicMock()
         req.path = "/test/"
         req.GET.urlencode.return_value = ""
- 
+
         v = FakeView()
         v.get(req)
         v.get(req)
@@ -170,6 +176,7 @@ class TestCacheResponseDecorator:
         v.get(req)
         assert call_count == 2
 
+
 @pytest.mark.django_db
 class TestOrderStateMachineExtra:
 
@@ -181,10 +188,7 @@ class TestOrderStateMachineExtra:
     def test_can_transition_returns_false(self):
         from orders.state_machine import OrderStateMachine
 
-        assert (
-            OrderStateMachine.can_transition("pending", "delivered")
-            is False
-        )
+        assert OrderStateMachine.can_transition("pending", "delivered") is False
 
     def test_transition_creates_status_log(self, order, test_user):
         from orders.state_machine import OrderStateMachine
@@ -203,4 +207,3 @@ class TestOrderStateMachineExtra:
         assert log.new_status == "paid"
         assert log.reason == "Payment received"
         assert log.created_by == test_user
-

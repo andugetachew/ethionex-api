@@ -46,16 +46,22 @@ class TestThrottleBehavior:
     def test_register_blocks_after_limit(self, api_client):
         """3 registrations → 4th attempt returns 429."""
         for i in range(3):
-            api_client.post(AUTH_REGISTER, {
-                "username": f"u{i}",
-                "email": f"u{i}@test.com",
+            api_client.post(
+                AUTH_REGISTER,
+                {
+                    "username": f"u{i}",
+                    "email": f"u{i}@test.com",
+                    "password": "Pass123!",
+                    "password2": "Pass123!",
+                },
+            )
+        response = api_client.post(
+            AUTH_REGISTER,
+            {
+                "username": "over",
+                "email": "over@test.com",
                 "password": "Pass123!",
                 "password2": "Pass123!",
-            })
-        response = api_client.post(AUTH_REGISTER, {
-            "username": "over",
-            "email": "over@test.com",
-            "password": "Pass123!",
-            "password2": "Pass123!",
-        })
+            },
+        )
         assert response.status_code == 429

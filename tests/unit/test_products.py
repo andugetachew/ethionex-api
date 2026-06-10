@@ -20,9 +20,7 @@ class TestCategoryViews:
 
     def test_create_category_authenticated(self, auth_client):
         response = auth_client.post(
-            f"{BASE}/categories/",
-            {"name": "New Cat", "slug": "new-cat"},
-            format="json"
+            f"{BASE}/categories/", {"name": "New Cat", "slug": "new-cat"}, format="json"
         )
         assert response.status_code in (200, 201)
 
@@ -53,7 +51,9 @@ class TestProductDetailView:
         )
         assert response.status_code == 200
 
-    def test_update_others_product_returns_403(self, auth_client, test_product, test_user):
+    def test_update_others_product_returns_403(
+        self, auth_client, test_product, test_user
+    ):
         """Lines 155-158"""
         auth_client.force_authenticate(user=test_user)
         response = auth_client.patch(
@@ -67,7 +67,9 @@ class TestProductDetailView:
         response = auth_client.delete(self.url(test_product.id))
         assert response.status_code == 204
 
-    def test_delete_others_product_returns_403(self, auth_client, test_product, test_user):
+    def test_delete_others_product_returns_403(
+        self, auth_client, test_product, test_user
+    ):
         """Line 162"""
         auth_client.force_authenticate(user=test_user)
         response = auth_client.delete(self.url(test_product.id))
@@ -92,22 +94,20 @@ class TestReviewViews:
     def test_create_review(self, auth_client, test_product, test_user):
         auth_client.force_authenticate(user=test_user)
         response = auth_client.post(
-            self.url(test_product.id),
-            {"rating": 4, "comment": "Good"},
-            format="json"
+            self.url(test_product.id), {"rating": 4, "comment": "Good"}, format="json"
         )
         assert response.status_code == 201
 
-    def test_duplicate_review_returns_400(self, auth_client, test_product, test_user, db):
+    def test_duplicate_review_returns_400(
+        self, auth_client, test_product, test_user, db
+    ):
         """Lines 248-249"""
         Review.objects.create(
             user=test_user, product=test_product, rating=5, comment="First"
         )
         auth_client.force_authenticate(user=test_user)
         response = auth_client.post(
-            self.url(test_product.id),
-            {"rating": 3, "comment": "Second"},
-            format="json"
+            self.url(test_product.id), {"rating": 3, "comment": "Second"}, format="json"
         )
         assert response.status_code == 400
 
@@ -124,24 +124,17 @@ class TestWishlistViews:
         test_product.is_available = True
         test_product.save()
         response = auth_client.post(
-            "/api/v1/wishlist/add/",
-            {"product_id": test_product.id},
-            format="json"
+            "/api/v1/wishlist/add/", {"product_id": test_product.id}, format="json"
         )
-
 
     def test_add_same_product_twice_returns_200(self, auth_client, test_product):
         test_product.is_available = True
         test_product.save()
         auth_client.post(
-            "/api/v1/wishlist/add/",
-            {"product_id": test_product.id},
-            format="json"
+            "/api/v1/wishlist/add/", {"product_id": test_product.id}, format="json"
         )
         response = auth_client.post(
-            "/api/v1/wishlist/add/",
-            {"product_id": test_product.id},
-            format="json"
+            "/api/v1/wishlist/add/", {"product_id": test_product.id}, format="json"
         )
         assert response.status_code in (200, 201, 500)
 
@@ -157,15 +150,11 @@ class TestWishlistViews:
 
     def test_remove_from_wishlist(self, auth_client, test_product, test_user):
         Wishlist.objects.create(user=test_user, product=test_product)
-        response = auth_client.delete(
-            f"{BASE}/wishlist/remove/{test_product.id}/"
-        )
+        response = auth_client.delete(f"{BASE}/wishlist/remove/{test_product.id}/")
         assert response.status_code == 200
 
     def test_remove_nonexistent_returns_404(self, auth_client, test_product):
-        response = auth_client.delete(
-            f"{BASE}/wishlist/remove/{test_product.id}/"
-        )
+        response = auth_client.delete(f"{BASE}/wishlist/remove/{test_product.id}/")
         assert response.status_code == 404
 
     def test_clear_wishlist(self, auth_client, test_product, test_user):
@@ -181,6 +170,7 @@ class TestCheckLowStock:
     @patch("products.views.send_mail")
     def test_low_stock_triggers_email(self, mock_mail, test_product):
         from products.views import check_low_stock
+
         mock_mail.return_value = 1
         test_product.stock_quantity = 2
         test_product.reorder_level = 5
@@ -191,11 +181,13 @@ class TestCheckLowStock:
     @patch("products.views.send_mail")
     def test_sufficient_stock_no_email(self, mock_mail, test_product):
         from products.views import check_low_stock
+
         test_product.stock_quantity = 100
         test_product.reorder_level = 5
         test_product.save()
         check_low_stock(test_product)
         mock_mail.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestProductModelMethods:

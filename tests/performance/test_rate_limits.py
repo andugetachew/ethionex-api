@@ -7,6 +7,7 @@ from tests.urls import AUTH_LOGIN, AUTH_REGISTER, ORDERS, PRODUCTS
 User = get_user_model()
 from django.test import override_settings
 
+
 def redis_available():
     """
     Check if Redis is running and reachable.
@@ -78,22 +79,22 @@ class TestRateLimits:
                 assert response.status_code in [201, 400]
 
     @override_settings(
-    REST_FRAMEWORK={
-        "DEFAULT_THROTTLE_CLASSES": [
-            "rest_framework.throttling.AnonRateThrottle",
-            "rest_framework.throttling.UserRateThrottle",
-        ],
-        "DEFAULT_THROTTLE_RATES": {
-            "search": "30/minute",
+        REST_FRAMEWORK={
+            "DEFAULT_THROTTLE_CLASSES": [
+                "rest_framework.throttling.AnonRateThrottle",
+                "rest_framework.throttling.UserRateThrottle",
+            ],
+            "DEFAULT_THROTTLE_RATES": {
+                "search": "30/minute",
+            },
         },
-    },
-    CACHES={
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "throttle-test",
-        }
-    }
-)
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "throttle-test",
+            }
+        },
+    )
     def test_search_rate_limit(self):
         """Test that SearchRateThrottle allows 30 requests then blocks"""
         from ethionex_api.throttles import SearchRateThrottle

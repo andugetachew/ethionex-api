@@ -289,7 +289,7 @@ class AddToWishlistView(APIView):
             )
 
         try:
-           product = Product.objects.get(id=product_id, is_active=True)
+            product = Product.objects.get(id=product_id, is_active=True)
         except Product.DoesNotExist:
             return Response(
                 {"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND

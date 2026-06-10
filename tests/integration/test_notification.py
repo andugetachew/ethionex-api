@@ -36,13 +36,16 @@ class TestNotifications:
         """Email service is called during order creation."""
         mock_mail.return_value = 1
         self.client.post(CART_ADD, {"product_id": self.product.id, "quantity": 1})
-        response = self.client.post(ORDERS, {
-            "payment_method": "cash",
-            "full_name": "Test User",
-            "phone_number": "0911234567",
-            "address": "123 Test St",
-            "city": "Addis Ababa",
-        })
+        response = self.client.post(
+            ORDERS,
+            {
+                "payment_method": "cash",
+                "full_name": "Test User",
+                "phone_number": "0911234567",
+                "address": "123 Test St",
+                "city": "Addis Ababa",
+            },
+        )
         assert response.status_code == 201
         assert "order_number" in response.data
 
@@ -50,12 +53,15 @@ class TestNotifications:
     def test_welcome_email_on_registration(self, mock_mail):
         """Registration triggers a verification email via send_mail."""
         mock_mail.return_value = 1
-        response = self.client.post(AUTH_REGISTER, {
-            "username": "newuser",
-            "email": "new@example.com",
-            "password": "StrongPass123",
-            "password2": "StrongPass123",
-        })
+        response = self.client.post(
+            AUTH_REGISTER,
+            {
+                "username": "newuser",
+                "email": "new@example.com",
+                "password": "StrongPass123",
+                "password2": "StrongPass123",
+            },
+        )
         assert response.status_code == 201
         # send_mail is called by RegisterView.send_verification_email
         assert mock_mail.called
@@ -67,12 +73,15 @@ class TestNotifications:
     def test_verification_email_contains_token(self, mock_mail):
         """Verification email body contains a token link."""
         mock_mail.return_value = 1
-        self.client.post(AUTH_REGISTER, {
-            "username": "tokenuser",
-            "email": "token@example.com",
-            "password": "StrongPass123",
-            "password2": "StrongPass123",
-        })
+        self.client.post(
+            AUTH_REGISTER,
+            {
+                "username": "tokenuser",
+                "email": "token@example.com",
+                "password": "StrongPass123",
+                "password2": "StrongPass123",
+            },
+        )
         assert mock_mail.called
         message_body = mock_mail.call_args[0][1]
         assert "verify-email" in message_body

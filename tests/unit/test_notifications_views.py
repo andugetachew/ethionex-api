@@ -1,4 +1,3 @@
-
 import pytest
 from notifications.models import Notification
 
@@ -17,9 +16,7 @@ class TestNotificationViews:
         assert response.status_code == 401
 
     def test_mark_read_success(self, auth_client, test_user):
-        n = Notification.objects.create(
-            user=test_user, message="Hi", is_read=False
-        )
+        n = Notification.objects.create(user=test_user, message="Hi", is_read=False)
         response = auth_client.post(f"{self.BASE}/{n.id}/mark-read/")
         assert response.status_code == 200
         n.refresh_from_db()
@@ -34,9 +31,7 @@ class TestNotificationViews:
         Notification.objects.create(user=test_user, message="B", is_read=False)
         response = auth_client.post(f"{self.BASE}/mark-all-read/")
         assert response.status_code == 200
-        assert Notification.objects.filter(
-            user=test_user, is_read=False
-        ).count() == 0
+        assert Notification.objects.filter(user=test_user, is_read=False).count() == 0
 
     def test_mark_all_read_unauthenticated(self, api_client):
         response = api_client.post(f"{self.BASE}/mark-all-read/")

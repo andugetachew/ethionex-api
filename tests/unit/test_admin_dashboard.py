@@ -29,18 +29,30 @@ def admin(db):
 @pytest.fixture
 def pending_order(db, buyer):
     return Order.objects.create(
-        user=buyer, full_name="Buyer", phone_number="09",
-        address="Addr", city="City", payment_method="cash",
-        status="pending", subtotal=1000, total=1000,
+        user=buyer,
+        full_name="Buyer",
+        phone_number="09",
+        address="Addr",
+        city="City",
+        payment_method="cash",
+        status="pending",
+        subtotal=1000,
+        total=1000,
     )
 
 
 @pytest.fixture
 def delivered_order(db, buyer):
     return Order.objects.create(
-        user=buyer, full_name="Buyer", phone_number="09",
-        address="Addr", city="City", payment_method="cash",
-        status="delivered", subtotal=2000, total=2000,
+        user=buyer,
+        full_name="Buyer",
+        phone_number="09",
+        address="Addr",
+        city="City",
+        payment_method="cash",
+        status="delivered",
+        subtotal=2000,
+        total=2000,
     )
 
 
@@ -189,11 +201,14 @@ class TestSalesReportView:
 
     def test_custom_date_range(self, client, admin):
         client.force_authenticate(user=admin)
-        response = client.get(self.URL, {
-            "period": "custom",
-            "start_date": "2026-01-01",
-            "end_date": "2026-01-07",
-        })
+        response = client.get(
+            self.URL,
+            {
+                "period": "custom",
+                "start_date": "2026-01-01",
+                "end_date": "2026-01-07",
+            },
+        )
         assert response.status_code == 200
 
     def test_buyer_gets_403(self, client, buyer):

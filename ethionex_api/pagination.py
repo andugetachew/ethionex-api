@@ -1,7 +1,10 @@
 from rest_framework.pagination import PageNumberPagination, CursorPagination
 
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination, CursorPagination as DRFCursorPagination
+from rest_framework.pagination import (
+    PageNumberPagination,
+    CursorPagination as DRFCursorPagination,
+)
 
 
 class StandardPagination(PageNumberPagination):
@@ -78,7 +81,9 @@ class SmallPagination(PageNumberPagination):
             }
         )
 
+
 class CursorPagination(DRFCursorPagination):
     """Cursor pagination for infinite scroll endpoints"""
+
     page_size = 20
     ordering = "created_at"

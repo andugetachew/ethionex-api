@@ -16,9 +16,15 @@ def user(db):
 @pytest.fixture
 def order(db, user):
     return Order.objects.create(
-        user=user, full_name="Notif User", phone_number="09",
-        address="Addr", city="City", payment_method="cash",
-        status="pending", subtotal=200, total=200,
+        user=user,
+        full_name="Notif User",
+        phone_number="09",
+        address="Addr",
+        city="City",
+        payment_method="cash",
+        status="pending",
+        subtotal=200,
+        total=200,
     )
 
 
@@ -28,6 +34,7 @@ class TestNotificationsWelcomeEmail:
     @patch("notifications.tasks.send_mail")
     def test_sends_to_user(self, mock_mail, user):
         from notifications.tasks import send_welcome_email_task
+
         mock_mail.return_value = 1
         result = send_welcome_email_task(user.id)
         assert mock_mail.called
@@ -36,6 +43,7 @@ class TestNotificationsWelcomeEmail:
     @patch("notifications.tasks.send_mail")
     def test_user_not_found(self, mock_mail):
         from notifications.tasks import send_welcome_email_task
+
         result = send_welcome_email_task(99999)
         assert not mock_mail.called
         assert "Error" in result
@@ -43,6 +51,7 @@ class TestNotificationsWelcomeEmail:
     @patch("notifications.tasks.send_mail")
     def test_error_handled(self, mock_mail, user):
         from notifications.tasks import send_welcome_email_task
+
         mock_mail.side_effect = Exception("fail")
         result = send_welcome_email_task(user.id)
         assert "Error" in result
@@ -54,6 +63,7 @@ class TestNotificationsOrderConfirmation:
     @patch("notifications.tasks.send_mail")
     def test_sends_confirmation(self, mock_mail, order):
         from notifications.tasks import send_order_confirmation_task
+
         mock_mail.return_value = 1
         result = send_order_confirmation_task(order.id)
         assert mock_mail.called
@@ -62,6 +72,7 @@ class TestNotificationsOrderConfirmation:
     @patch("notifications.tasks.send_mail")
     def test_order_not_found(self, mock_mail):
         from notifications.tasks import send_order_confirmation_task
+
         result = send_order_confirmation_task(99999)
         assert not mock_mail.called
         assert "Error" in result
@@ -69,6 +80,7 @@ class TestNotificationsOrderConfirmation:
     @patch("notifications.tasks.send_mail")
     def test_error_handled(self, mock_mail, order):
         from notifications.tasks import send_order_confirmation_task
+
         mock_mail.side_effect = Exception("fail")
         result = send_order_confirmation_task(order.id)
         assert "Error" in result
@@ -80,6 +92,7 @@ class TestNotificationsPasswordReset:
     @patch("notifications.tasks.send_mail")
     def test_reset_link_in_message(self, mock_mail, user):
         from notifications.tasks import send_password_reset_email_task
+
         mock_mail.return_value = 1
         send_password_reset_email_task(user.id, "reset-tok-xyz")
         assert mock_mail.called
@@ -89,6 +102,7 @@ class TestNotificationsPasswordReset:
     @patch("notifications.tasks.send_mail")
     def test_user_not_found(self, mock_mail):
         from notifications.tasks import send_password_reset_email_task
+
         result = send_password_reset_email_task(99999, "tok")
         assert not mock_mail.called
         assert "Error" in result
@@ -96,6 +110,7 @@ class TestNotificationsPasswordReset:
     @patch("notifications.tasks.send_mail")
     def test_error_handled(self, mock_mail, user):
         from notifications.tasks import send_password_reset_email_task
+
         mock_mail.side_effect = Exception("fail")
         result = send_password_reset_email_task(user.id, "tok")
         assert "Error" in result
@@ -107,6 +122,7 @@ class TestNotificationsVerificationEmail:
     @patch("notifications.tasks.send_mail")
     def test_token_in_message(self, mock_mail, user):
         from notifications.tasks import send_verification_email_task
+
         mock_mail.return_value = 1
         send_verification_email_task(user.id, "verify-tok-abc")
         assert mock_mail.called
@@ -116,6 +132,7 @@ class TestNotificationsVerificationEmail:
     @patch("notifications.tasks.send_mail")
     def test_user_not_found(self, mock_mail):
         from notifications.tasks import send_verification_email_task
+
         result = send_verification_email_task(99999, "tok")
         assert not mock_mail.called
         assert "Error" in result
@@ -123,6 +140,7 @@ class TestNotificationsVerificationEmail:
     @patch("notifications.tasks.send_mail")
     def test_error_handled(self, mock_mail, user):
         from notifications.tasks import send_verification_email_task
+
         mock_mail.side_effect = Exception("fail")
         result = send_verification_email_task(user.id, "tok")
         assert "Error" in result
@@ -134,6 +152,7 @@ class TestNotificationsLowStockAlert:
     @patch("notifications.tasks.send_mail")
     def test_sends_alert(self, mock_mail, test_product):
         from notifications.tasks import send_low_stock_alert_task
+
         mock_mail.return_value = 1
         result = send_low_stock_alert_task(test_product.id)
         assert isinstance(result, str)
@@ -141,6 +160,7 @@ class TestNotificationsLowStockAlert:
     @patch("notifications.tasks.send_mail")
     def test_product_not_found(self, mock_mail):
         from notifications.tasks import send_low_stock_alert_task
+
         result = send_low_stock_alert_task(99999)
         assert not mock_mail.called
         assert "Error" in result
@@ -148,6 +168,7 @@ class TestNotificationsLowStockAlert:
     @patch("notifications.tasks.send_mail")
     def test_error_handled(self, mock_mail, test_product):
         from notifications.tasks import send_low_stock_alert_task
+
         mock_mail.side_effect = Exception("fail")
         result = send_low_stock_alert_task(test_product.id)
         assert "Error" in result
@@ -159,6 +180,7 @@ class TestNotificationsSellerOrderNotification:
     @patch("notifications.tasks.send_mail")
     def test_sends_to_seller(self, mock_mail, order, test_seller):
         from notifications.tasks import send_seller_order_notification_task
+
         mock_mail.return_value = 1
         result = send_seller_order_notification_task(order.id, test_seller.id)
         assert mock_mail.called
@@ -167,6 +189,7 @@ class TestNotificationsSellerOrderNotification:
     @patch("notifications.tasks.send_mail")
     def test_order_not_found(self, mock_mail, test_seller):
         from notifications.tasks import send_seller_order_notification_task
+
         result = send_seller_order_notification_task(99999, test_seller.id)
         assert not mock_mail.called
         assert "Error" in result
@@ -174,6 +197,7 @@ class TestNotificationsSellerOrderNotification:
     @patch("notifications.tasks.send_mail")
     def test_seller_not_found(self, mock_mail, order):
         from notifications.tasks import send_seller_order_notification_task
+
         result = send_seller_order_notification_task(order.id, 99999)
         assert not mock_mail.called
         assert "Error" in result
@@ -181,6 +205,7 @@ class TestNotificationsSellerOrderNotification:
     @patch("notifications.tasks.send_mail")
     def test_error_handled(self, mock_mail, order, test_seller):
         from notifications.tasks import send_seller_order_notification_task
+
         mock_mail.side_effect = Exception("fail")
         result = send_seller_order_notification_task(order.id, test_seller.id)
         assert "Error" in result
@@ -190,11 +215,13 @@ class TestNotificationsMisc:
 
     def test_health_check_returns_ok(self):
         from notifications.tasks import health_check
+
         result = health_check()
         assert result["status"] == "ok"
         assert "Celery" in result["message"]
 
     def test_backup_returns_string(self):
         from notifications.tasks import automated_database_backup
+
         result = automated_database_backup()
         assert isinstance(result, str)

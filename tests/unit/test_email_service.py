@@ -6,11 +6,13 @@ from notifications.email_service import EmailService
 
 User = get_user_model()
 
+
 @pytest.fixture(autouse=True)
 def mock_email_sending():
     """Override conftest mock — let tests control send_mail directly"""
     yield
-    
+
+
 @pytest.fixture
 def test_order(db, test_user):
     return Order.objects.create(

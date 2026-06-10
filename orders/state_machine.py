@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone  # <-- ADD THIS
 from .services import InventoryService
 
+
 class OrderState(Enum):
     PENDING = "pending"
     PAID = "paid"
@@ -46,6 +47,7 @@ class OrderStateMachine:
         order.save()
 
         from .models import OrderStatusLog
+
         OrderStatusLog.objects.create(
             order=order,
             old_status=old_status,

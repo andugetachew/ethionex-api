@@ -10,59 +10,149 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('products', '0001_initial'),
+        ("products", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Order',
+            name="Order",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('order_number', models.CharField(max_length=20, unique=True)),
-                ('status', models.CharField(choices=[('pending', 'Pending Payment'), ('processing', 'Processing'), ('shipped', 'Shipped'), ('delivered', 'Delivered'), ('cancelled', 'Cancelled'), ('refunded', 'Refunded')], default='pending', max_length=20)),
-                ('payment_method', models.CharField(choices=[('cash', 'Cash on Delivery'), ('telebirr', 'Telebirr'), ('chapa', 'Chapa'), ('bank', 'Bank Transfer')], default='cash', max_length=20)),
-                ('full_name', models.CharField(max_length=100)),
-                ('phone_number', models.CharField(max_length=15)),
-                ('address', models.TextField()),
-                ('city', models.CharField(max_length=100)),
-                ('sub_city', models.CharField(blank=True, max_length=100)),
-                ('subtotal', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('delivery_fee', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('total', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('notes', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('tracking_number', models.CharField(blank=True, max_length=100, null=True)),
-                ('shipped_at', models.DateTimeField(blank=True, null=True)),
-                ('delivered_at', models.DateTimeField(blank=True, null=True)),
-                ('status_history', models.JSONField(blank=True, default=list)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("order_number", models.CharField(max_length=20, unique=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending Payment"),
+                            ("processing", "Processing"),
+                            ("shipped", "Shipped"),
+                            ("delivered", "Delivered"),
+                            ("cancelled", "Cancelled"),
+                            ("refunded", "Refunded"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "payment_method",
+                    models.CharField(
+                        choices=[
+                            ("cash", "Cash on Delivery"),
+                            ("telebirr", "Telebirr"),
+                            ("chapa", "Chapa"),
+                            ("bank", "Bank Transfer"),
+                        ],
+                        default="cash",
+                        max_length=20,
+                    ),
+                ),
+                ("full_name", models.CharField(max_length=100)),
+                ("phone_number", models.CharField(max_length=15)),
+                ("address", models.TextField()),
+                ("city", models.CharField(max_length=100)),
+                ("sub_city", models.CharField(blank=True, max_length=100)),
+                ("subtotal", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "delivery_fee",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                ("total", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("notes", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "tracking_number",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("shipped_at", models.DateTimeField(blank=True, null=True)),
+                ("delivered_at", models.DateTimeField(blank=True, null=True)),
+                ("status_history", models.JSONField(blank=True, default=list)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="orders",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='OrderItem',
+            name="OrderItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantity', models.PositiveIntegerField()),
-                ('price', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='orders.order')),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='products.product')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("quantity", models.PositiveIntegerField()),
+                ("price", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "order",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="orders.order",
+                    ),
+                ),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="products.product",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='OrderStatusLog',
+            name="OrderStatusLog",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('old_status', models.CharField(max_length=20)),
-                ('new_status', models.CharField(max_length=20)),
-                ('reason', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('created_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='status_logs', to='orders.order')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("old_status", models.CharField(max_length=20)),
+                ("new_status", models.CharField(max_length=20)),
+                ("reason", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "order",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="status_logs",
+                        to="orders.order",
+                    ),
+                ),
             ],
         ),
     ]

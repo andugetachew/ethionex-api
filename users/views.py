@@ -149,7 +149,7 @@ class VerifyEmailView(APIView):
                     )
 
             user.is_email_verified = True
-            user.email_verification_token = uuid.uuid4()   
+            user.email_verification_token = uuid.uuid4()
             user.save()
 
             return Response(

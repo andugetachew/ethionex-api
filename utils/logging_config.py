@@ -31,6 +31,7 @@ class JSONFormatter(logging.Formatter):
 
         return json.dumps(log_entry)
 
+
 class AdminEmailHandler(logging.Handler):
     """Send critical errors to admin email"""
 

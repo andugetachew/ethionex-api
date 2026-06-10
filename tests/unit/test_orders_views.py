@@ -38,18 +38,30 @@ def cart_with_item(db, buyer, test_product):
 @pytest.fixture
 def pending_order(db, buyer):
     return Order.objects.create(
-        user=buyer, full_name="Buyer", phone_number="09",
-        address="Addr", city="City", payment_method="cash",
-        status="pending", subtotal=1000, total=1000,
+        user=buyer,
+        full_name="Buyer",
+        phone_number="09",
+        address="Addr",
+        city="City",
+        payment_method="cash",
+        status="pending",
+        subtotal=1000,
+        total=1000,
     )
 
 
 @pytest.fixture
 def paid_order(db, buyer):
     return Order.objects.create(
-        user=buyer, full_name="Buyer", phone_number="09",
-        address="Addr", city="City", payment_method="cash",
-        status="paid", subtotal=1000, total=1000,
+        user=buyer,
+        full_name="Buyer",
+        phone_number="09",
+        address="Addr",
+        city="City",
+        payment_method="cash",
+        status="paid",
+        subtotal=1000,
+        total=1000,
     )
 
 
@@ -77,52 +89,82 @@ class TestOrderListCreateView:
         )
         # All returned orders must belong to buyer — verify via DB lookup
         from orders.models import Order
+
         for order in results:
             order_number = order.get("order_number")
             assert Order.objects.filter(
                 order_number=order_number, user=buyer
             ).exists(), f"Order {order_number} does not belong to buyer"
- 
 
     @patch("orders.views.EmailService.send_order_confirmation")
     def test_create_order_success(self, mock_email, client, buyer, cart_with_item):
         mock_email.return_value = True
         client.force_authenticate(user=buyer)
-        response = client.post(self.URL, {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        response = client.post(
+            self.URL,
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         assert response.status_code == 201
 
     @patch("orders.views.EmailService.send_order_confirmation")
     def test_create_clears_cart(self, mock_email, client, buyer, cart_with_item):
         mock_email.return_value = True
         client.force_authenticate(user=buyer)
-        client.post(self.URL, {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        client.post(
+            self.URL,
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         assert cart_with_item.items.count() == 0
 
     @patch("orders.views.EmailService.send_order_confirmation")
-    def test_create_decreases_stock(self, mock_email, client, buyer, cart_with_item, test_product):
+    def test_create_decreases_stock(
+        self, mock_email, client, buyer, cart_with_item, test_product
+    ):
         mock_email.return_value = True
         before = test_product.stock_quantity
         client.force_authenticate(user=buyer)
-        client.post(self.URL, {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        client.post(
+            self.URL,
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         test_product.refresh_from_db()
         assert test_product.stock_quantity == before - 2
 
     def test_create_empty_cart_returns_400(self, client, buyer, db):
         Cart.objects.get_or_create(user=buyer)
         client.force_authenticate(user=buyer)
-        response = client.post(self.URL, {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        response = client.post(
+            self.URL,
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         assert response.status_code == 400
 
     def test_create_unauthenticated_returns_401(self, client):
@@ -130,27 +172,45 @@ class TestOrderListCreateView:
         assert response.status_code == 401
 
     @patch("orders.views.EmailService.send_order_confirmation")
-    def test_insufficient_stock_returns_400(self, mock_email, client, buyer, db, test_product, test_seller, test_category):
+    def test_insufficient_stock_returns_400(
+        self, mock_email, client, buyer, db, test_product, test_seller, test_category
+    ):
         mock_email.return_value = True
         test_product.stock_quantity = 1
         test_product.save()
         cart, _ = Cart.objects.get_or_create(user=buyer)
         CartItem.objects.create(cart=cart, product=test_product, quantity=5)
         client.force_authenticate(user=buyer)
-        response = client.post(self.URL, {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        response = client.post(
+            self.URL,
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         assert response.status_code == 400
 
     @patch("orders.views.EmailService.send_order_confirmation")
-    def test_email_failure_does_not_crash(self, mock_email, client, buyer, cart_with_item):
+    def test_email_failure_does_not_crash(
+        self, mock_email, client, buyer, cart_with_item
+    ):
         mock_email.side_effect = Exception("SMTP error")
         client.force_authenticate(user=buyer)
-        response = client.post(self.URL, {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        response = client.post(
+            self.URL,
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         assert response.status_code == 201
 
 
@@ -185,7 +245,9 @@ class TestOrderDetailView:
         pending_order.refresh_from_db()
         assert pending_order.status == "cancelled"
 
-    def test_cancel_restores_stock(self, client, buyer, pending_order, test_product, db):
+    def test_cancel_restores_stock(
+        self, client, buyer, pending_order, test_product, db
+    ):
         before = test_product.stock_quantity
         OrderItem.objects.create(
             order=pending_order, product=test_product, quantity=2, price=1000
@@ -245,6 +307,7 @@ class TestAdminOrderStatusUpdateView:
         response = client.post(self.url(99999), {"status": "paid"})
         assert response.status_code == 404
 
+
 @pytest.mark.django_db
 class TestOrderStatusUpdateView:
 
@@ -279,10 +342,17 @@ class TestOrderListCreateViewExtra:
         cart, _ = Cart.objects.get_or_create(user=buyer)
         CartItem.objects.create(cart=cart, product=test_product, quantity=1)
         client.force_authenticate(user=buyer)
-        response = client.post("/api/v1/orders/", {
-            "payment_method": "cash", "full_name": "Buyer",
-            "phone_number": "09", "address": "Addr", "city": "City",
-        }, format="json")
+        response = client.post(
+            "/api/v1/orders/",
+            {
+                "payment_method": "cash",
+                "full_name": "Buyer",
+                "phone_number": "09",
+                "address": "Addr",
+                "city": "City",
+            },
+            format="json",
+        )
         assert response.status_code == 400
 
 
@@ -294,7 +364,8 @@ class TestOrderStatusUpdateByNumber:
         client.force_authenticate(user=admin)
         response = client.post(
             f"/api/v1/orders/{pending_order.order_number}/status/",
-            {"status": "paid"}, format="json"
+            {"status": "paid"},
+            format="json",
         )
         assert response.status_code == 200
 
@@ -313,10 +384,12 @@ class TestOrderDetailPatchCancelRestoresStock:
         client.force_authenticate(user=admin)
         client.patch(
             f"/api/v1/orders/{pending_order.order_number}/",
-            {"status": "cancelled"}, format="json"
+            {"status": "cancelled"},
+            format="json",
         )
         test_product.refresh_from_db()
         assert test_product.stock_quantity == before + 3
+
 
 @pytest.mark.django_db
 class TestAdminOrderListView:
@@ -341,9 +414,7 @@ class TestAdminOrderListView:
     ):
         client.force_authenticate(user=admin)
 
-        response = client.get(
-            "/api/v1/orders/admin/?status=pending"
-        )
+        response = client.get("/api/v1/orders/admin/?status=pending")
 
         assert response.status_code == 200
 

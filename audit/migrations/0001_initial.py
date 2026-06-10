@@ -15,18 +15,46 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='AuditLog',
+            name="AuditLog",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('action', models.CharField(choices=[('CREATE', 'Create'), ('UPDATE', 'Update'), ('DELETE', 'Delete'), ('STATUS_CHANGE', 'Status Change'), ('LOGIN', 'Login'), ('LOGOUT', 'Logout')], max_length=20)),
-                ('model_name', models.CharField(max_length=100)),
-                ('object_id', models.CharField(max_length=50)),
-                ('old_data', models.JSONField(default=dict)),
-                ('new_data', models.JSONField(default=dict)),
-                ('ip_address', models.GenericIPAddressField(null=True)),
-                ('user_agent', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "action",
+                    models.CharField(
+                        choices=[
+                            ("CREATE", "Create"),
+                            ("UPDATE", "Update"),
+                            ("DELETE", "Delete"),
+                            ("STATUS_CHANGE", "Status Change"),
+                            ("LOGIN", "Login"),
+                            ("LOGOUT", "Logout"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("model_name", models.CharField(max_length=100)),
+                ("object_id", models.CharField(max_length=50)),
+                ("old_data", models.JSONField(default=dict)),
+                ("new_data", models.JSONField(default=dict)),
+                ("ip_address", models.GenericIPAddressField(null=True)),
+                ("user_agent", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

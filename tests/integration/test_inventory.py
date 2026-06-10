@@ -26,14 +26,20 @@ class TestInventoryService:
         assert test_product.stock_quantity == before
 
     def test_check_availability_true(self, test_product):
-        assert InventoryService.check_stock_availability(
-            test_product.id, test_product.stock_quantity
-        ) is True
+        assert (
+            InventoryService.check_stock_availability(
+                test_product.id, test_product.stock_quantity
+            )
+            is True
+        )
 
     def test_check_availability_false(self, test_product):
-        assert InventoryService.check_stock_availability(
-            test_product.id, test_product.stock_quantity + 1
-        ) is False
+        assert (
+            InventoryService.check_stock_availability(
+                test_product.id, test_product.stock_quantity + 1
+            )
+            is False
+        )
 
     def test_reserve_atomic_rollback_on_error(self, test_product):
         """Failed reserve must not change stock."""
