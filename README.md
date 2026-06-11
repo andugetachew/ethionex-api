@@ -10,6 +10,15 @@
 ![Docker](https://img.shields.io/badge/Docker-enabled-blue)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 
+## 🌐 Live Demo
+
+| | URL |
+|--|--|
+| **API Base** | https://ethionex-api.onrender.com |
+| **Swagger Docs** | https://ethionex-api.onrender.com/api/docs/ |
+| **ReDoc** | https://ethionex-api.onrender.com/api/redoc/ |
+| **Health Check** | https://ethionex-api.onrender.com/health/ |
+
 - 321 automated tests
 - 83% code coverage
 - Unit + integration + performance test layers
