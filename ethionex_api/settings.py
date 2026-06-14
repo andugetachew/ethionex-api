@@ -74,15 +74,19 @@ TEMPLATES = [
     },
 ]
 
-
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL", default=""),
+        default="postgres://{}:{}@{}:{}/{}".format(
+            config("DB_USER", default="postgres"),
+            config("DB_PASSWORD", default="postgres"),
+            config("DB_HOST", default="localhost"),
+            config("DB_PORT", default="5432"),
+            config("DB_NAME", default="ethionex_db"),
+        ),
         conn_max_age=600,
         ssl_require=not DEBUG,
     )
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
