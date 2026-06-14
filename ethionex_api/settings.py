@@ -5,6 +5,7 @@ from decouple import config, Csv
 import sys
 import urllib.parse
 import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -72,8 +73,6 @@ TEMPLATES = [
         },
     },
 ]
-
-
 
 
 DATABASES = {
@@ -234,8 +233,6 @@ CACHES = {
 CACHE_MIDDLEWARE_ALIAS = "default"
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = "ethionex"
-
-
 
 
 _redis = urllib.parse.urlparse(REDIS_URL)
