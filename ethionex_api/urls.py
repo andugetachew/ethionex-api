@@ -19,7 +19,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
 import csv
+from django.http import JsonResponse
 from django.views.generic import RedirectView
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 v1_urls = [
     path("auth/", include("users.urls")),
     path("", include("products.urls")),
@@ -102,6 +107,7 @@ redoc_view = SpectacularRedocView.as_view(url_name="schema")
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/api/docs/"), name="root"),
+    path("health/", health_check, name="health"),
     path("admin/", admin.site.urls),
     path("", welcome, name="welcome"),
     path("api/", welcome, name="api-root"),
