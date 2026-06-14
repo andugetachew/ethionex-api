@@ -211,7 +211,7 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@ethionex.com")
 
 
-REDIS_URL = config("REDIS_URL", default="redis://localhost:6379/1")
+REDIS_URL = config("REDIS_URL", default="redis://localhost:6379/0")
 
 CACHES = {
     "default": {
@@ -260,7 +260,7 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_TASK_ALWAYS_EAGER = not DEBUG
-
+CELERY_TASK_DEFAULT_QUEUE = "ethionex_queue"
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:8000")
 
