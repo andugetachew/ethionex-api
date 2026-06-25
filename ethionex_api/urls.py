@@ -22,8 +22,10 @@ import csv
 from django.http import JsonResponse
 from django.views.generic import RedirectView
 
+
 def health_check(request):
     return JsonResponse({"status": "ok"})
+
 
 v1_urls = [
     path("auth/", include("users.urls")),
