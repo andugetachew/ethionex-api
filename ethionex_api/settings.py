@@ -293,3 +293,11 @@ LOGGING = {
 }
 if "pytest" in sys.modules:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+
+CHAPA_API_KEY = config("CHAPA_API_KEY", default="")
+CHAPA_WEBHOOK_SECRET = config("CHAPA_WEBHOOK_SECRET", default="")
+STRIPE_API_KEY = config("STRIPE_API_KEY", default="")
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")
+STRIPE_PUBLISHABLE_KEY = config("STRIPE_PUBLISHABLE_KEY", default="")
+STRIPE_CURRENCY = config("STRIPE_CURRENCY", default="usd")
+CHAPA_CURRENCY = config("CHAPA_CURRENCY", default="ETB")
