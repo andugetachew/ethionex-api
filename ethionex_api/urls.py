@@ -107,7 +107,13 @@ schema_view = SpectacularAPIView.as_view()
 swagger_view = SpectacularSwaggerView.as_view(url_name="schema")
 redoc_view = SpectacularRedocView.as_view(url_name="schema")
 
+
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
+
 urlpatterns = [
+    path("sentry-debug/", trigger_error),
     path("", RedirectView.as_view(url="/api/docs/"), name="root"),
     path("health/", health_check, name="health"),
     path("admin/", admin.site.urls),

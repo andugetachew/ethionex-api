@@ -268,7 +268,14 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:8000")
 
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 
+import sentry_sdk
 
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        send_default_pii=True,
+        environment="development" if DEBUG else "production",
+    )
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

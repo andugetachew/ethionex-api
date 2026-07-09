@@ -22,6 +22,7 @@ Flow:
     Customer -> Checkout -> Payment -> Order Created -> Inventory
     Updated -> Seller Notified -> Receipt Generated
 """
+
 import logging
 
 import stripe
@@ -74,7 +75,9 @@ class CreateCheckoutView(APIView):
     def post(self, request, provider):
         if provider not in VALID_PROVIDERS:
             return Response(
-                {"error": f"Unknown provider '{provider}'. Use one of: {sorted(VALID_PROVIDERS)}"},
+                {
+                    "error": f"Unknown provider '{provider}'. Use one of: {sorted(VALID_PROVIDERS)}"
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -85,11 +88,14 @@ class CreateCheckoutView(APIView):
         try:
             cart = Cart.objects.get(user=request.user)
         except Cart.DoesNotExist:
-            return Response({"error": "Your cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Your cart is empty"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not cart.items.exists():
             return Response(
-                {"error": "Cannot check out an empty cart"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Cannot check out an empty cart"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         for cart_item in cart.items.all():
@@ -108,7 +114,11 @@ class CreateCheckoutView(APIView):
         currency = PROVIDER_CURRENCY[provider]()
 
         cart_snapshot = [
-            {"product_id": item.product.id, "quantity": item.quantity, "price": str(item.product.price)}
+            {
+                "product_id": item.product.id,
+                "quantity": item.quantity,
+                "price": str(item.product.price),
+            }
             for item in cart.items.all()
         ]
 
@@ -129,8 +139,12 @@ class CreateCheckoutView(APIView):
             total=total,
         )
 
-        success_url = request.data.get("success_url", f"{settings.FRONTEND_URL}/checkout/success")
-        cancel_url = request.data.get("cancel_url", f"{settings.FRONTEND_URL}/checkout/cancelled")
+        success_url = request.data.get(
+            "success_url", f"{settings.FRONTEND_URL}/checkout/success"
+        )
+        cancel_url = request.data.get(
+            "cancel_url", f"{settings.FRONTEND_URL}/checkout/cancelled"
+        )
 
         try:
             service = PaymentService(provider_name=provider)
@@ -166,7 +180,9 @@ class CreateCheckoutView(APIView):
 
         if not result.success:
             pending_checkout.delete()
-            return Response({"error": result.message}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response(
+                {"error": result.message}, status=status.HTTP_502_BAD_GATEWAY
+            )
 
         pending_checkout.provider_reference = result.transaction_id
         pending_checkout.save(update_fields=["provider_reference"])
@@ -235,7 +251,10 @@ class PaymentWebhookView(APIView):
 
     def _handle_chapa(self, request):
         shared_secret = request.META.get("HTTP_X_CHAPA_SIGNATURE", "")
-        if not settings.CHAPA_WEBHOOK_SECRET or shared_secret != settings.CHAPA_WEBHOOK_SECRET:
+        if (
+            not settings.CHAPA_WEBHOOK_SECRET
+            or shared_secret != settings.CHAPA_WEBHOOK_SECRET
+        ):
             logger.warning("Chapa webhook rejected: bad or missing signature")
             return Response({"error": "Invalid signature"}, status=400)
 
@@ -254,14 +273,18 @@ class PaymentWebhookView(APIView):
         return Response({"received": True})
 
     @transaction.atomic
-    def _complete_checkout(self, provider, provider_reference, paid, provider_transaction_id):
+    def _complete_checkout(
+        self, provider, provider_reference, paid, provider_transaction_id
+    ):
         pending_checkout = (
             PendingCheckout.objects.select_for_update()
             .filter(provider=provider, provider_reference=provider_reference)
             .first()
         )
         if pending_checkout is None:
-            logger.warning(f"Webhook: no PendingCheckout for {provider}:{provider_reference}")
+            logger.warning(
+                f"Webhook: no PendingCheckout for {provider}:{provider_reference}"
+            )
             return
 
         if pending_checkout.consumed_at is not None:
@@ -296,8 +319,12 @@ class PaymentWebhookView(APIView):
             delivery_fee=pending_checkout.delivery_fee,
             total=pending_checkout.total,
             notes=pending_checkout.notes,
-            stripe_checkout_session_id=provider_reference if provider == "stripe" else None,
-            stripe_payment_intent_id=provider_transaction_id if provider == "stripe" else None,
+            stripe_checkout_session_id=(
+                provider_reference if provider == "stripe" else None
+            ),
+            stripe_payment_intent_id=(
+                provider_transaction_id if provider == "stripe" else None
+            ),
             paid_at=timezone.now(),
         )
 
@@ -326,7 +353,9 @@ class PaymentWebhookView(APIView):
         cart = Cart.objects.filter(user=pending_checkout.user).first()
         if cart:
             cart.items.filter(
-                product_id__in=[item["product_id"] for item in pending_checkout.cart_snapshot]
+                product_id__in=[
+                    item["product_id"] for item in pending_checkout.cart_snapshot
+                ]
             ).delete()
 
         pending_checkout.consumed_at = timezone.now()
@@ -349,7 +378,9 @@ class PaymentWebhookView(APIView):
             try:
                 EmailService.send_seller_order_notification(order, seller)
             except Exception as e:
-                logger.error(f"Seller notification failed for order {order.order_number}: {e}")
+                logger.error(
+                    f"Seller notification failed for order {order.order_number}: {e}"
+                )
 
         # --- Receipt Generated ---
         try:
@@ -378,15 +409,21 @@ class VerifyPaymentView(APIView):
         ).first()
 
         if pending_checkout is None:
-            return Response({"error": "No checkout found for this transaction"}, status=404)
+            return Response(
+                {"error": "No checkout found for this transaction"}, status=404
+            )
 
         order = Order.objects.filter(
             stripe_checkout_session_id=transaction_id, user=request.user
         ).first()
         if order is None:
-            order = Order.objects.filter(
-                user=request.user, created_at__gte=pending_checkout.created_at
-            ).order_by("created_at").first()
+            order = (
+                Order.objects.filter(
+                    user=request.user, created_at__gte=pending_checkout.created_at
+                )
+                .order_by("created_at")
+                .first()
+            )
 
         service = PaymentService(provider_name=pending_checkout.provider)
         result = service.verify_payment(transaction_id)
@@ -469,13 +506,19 @@ class RefundPaymentView(APIView):
         provider = order.payment_method
         if provider not in VALID_PROVIDERS:
             return Response(
-                {"error": f"Order was paid via '{provider}', which has no refund flow."},
+                {
+                    "error": f"Order was paid via '{provider}', which has no refund flow."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        provider_reference = order.stripe_checkout_session_id if provider == "stripe" else None
+        provider_reference = (
+            order.stripe_checkout_session_id if provider == "stripe" else None
+        )
         if not provider_reference:
-            txn = order.payment_transactions.filter(kind="webhook", success=True).first()
+            txn = order.payment_transactions.filter(
+                kind="webhook", success=True
+            ).first()
             provider_reference = txn.transaction_id if txn else None
 
         if not provider_reference:
@@ -501,7 +544,9 @@ class RefundPaymentView(APIView):
         )
 
         if not result.success:
-            return Response({"error": result.message}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response(
+                {"error": result.message}, status=status.HTTP_502_BAD_GATEWAY
+            )
 
         order.status = "refunded"
         order.refunded_at = timezone.now()

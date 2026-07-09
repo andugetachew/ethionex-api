@@ -3,6 +3,7 @@ Tests for the payment integration (test-mode Stripe, simulated Chapa):
 initialization, webhook handling, order creation, verification,
 transaction history, and refunds.
 """
+
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
@@ -11,7 +12,6 @@ from django.urls import reverse
 
 from cart.models import Cart
 from orders.models import Order, PaymentTransaction, PendingCheckout
-
 
 CHECKOUT_PAYLOAD = {
     "payment_method": "stripe",
@@ -59,7 +59,9 @@ class TestCreateCheckoutView:
         assert pc.provider == "stripe"
 
     @patch("orders.payment_views.PaymentService")
-    def test_chapa_checkout_is_simulated(self, mock_service_cls, auth_client, test_cart):
+    def test_chapa_checkout_is_simulated(
+        self, mock_service_cls, auth_client, test_cart
+    ):
         mock_service = MagicMock()
         mock_service.process_payment.return_value = MagicMock(
             success=True,
@@ -91,10 +93,14 @@ class TestCreateCheckoutView:
         assert response.status_code == 401
 
     @patch("orders.payment_views.PaymentService")
-    def test_logs_transaction_history_on_init(self, mock_service_cls, auth_client, test_cart, test_user):
+    def test_logs_transaction_history_on_init(
+        self, mock_service_cls, auth_client, test_cart, test_user
+    ):
         mock_service = MagicMock()
         mock_service.process_payment.return_value = MagicMock(
-            success=True, transaction_id="cs_test_xyz", message="",
+            success=True,
+            transaction_id="cs_test_xyz",
+            message="",
             metadata={"checkout_url": "https://checkout.stripe.com/test/cs_test_xyz"},
         )
         mock_service_cls.return_value = mock_service
@@ -115,13 +121,19 @@ class TestCreateCheckoutView:
 
 @pytest.mark.django_db
 class TestPaymentWebhook:
-    def _pending_checkout(self, test_user, test_product, provider="stripe", ref="cs_test_abc"):
+    def _pending_checkout(
+        self, test_user, test_product, provider="stripe", ref="cs_test_abc"
+    ):
         return PendingCheckout.objects.create(
             user=test_user,
             provider=provider,
             provider_reference=ref,
             cart_snapshot=[
-                {"product_id": test_product.id, "quantity": 2, "price": str(test_product.price)}
+                {
+                    "product_id": test_product.id,
+                    "quantity": 2,
+                    "price": str(test_product.price),
+                }
             ],
             full_name="Test User",
             phone_number="0912345678",
@@ -133,7 +145,9 @@ class TestPaymentWebhook:
 
     def test_stripe_invalid_signature_rejected(self, api_client):
         response = api_client.post(
-            webhook_url("stripe"), data=b"{}", content_type="application/json",
+            webhook_url("stripe"),
+            data=b"{}",
+            content_type="application/json",
             HTTP_STRIPE_SIGNATURE="bad_signature",
         )
         assert response.status_code == 400
@@ -142,8 +156,13 @@ class TestPaymentWebhook:
     @patch("orders.payment_views.EmailService.send_seller_order_notification")
     @patch("orders.payment_views.stripe.Webhook.construct_event")
     def test_stripe_full_pipeline_on_payment_success(
-        self, mock_construct_event, mock_notify_seller, mock_receipt,
-        api_client, test_user, test_product,
+        self,
+        mock_construct_event,
+        mock_notify_seller,
+        mock_receipt,
+        api_client,
+        test_user,
+        test_product,
     ):
         starting_stock = test_product.stock_quantity
         self._pending_checkout(test_user, test_product)
@@ -154,7 +173,9 @@ class TestPaymentWebhook:
         }
 
         response = api_client.post(
-            webhook_url("stripe"), data=b"{}", content_type="application/json",
+            webhook_url("stripe"),
+            data=b"{}",
+            content_type="application/json",
             HTTP_STRIPE_SIGNATURE="valid_test_signature",
         )
         assert response.status_code == 200
@@ -169,7 +190,9 @@ class TestPaymentWebhook:
         mock_notify_seller.assert_called_once()
         mock_receipt.assert_called_once()
 
-        txn = PaymentTransaction.objects.get(transaction_id="cs_test_abc", kind="webhook")
+        txn = PaymentTransaction.objects.get(
+            transaction_id="cs_test_abc", kind="webhook"
+        )
         assert txn.success is True
 
     @patch("orders.payment_views.stripe.Webhook.construct_event")
@@ -184,16 +207,21 @@ class TestPaymentWebhook:
 
         for _ in range(2):
             api_client.post(
-                webhook_url("stripe"), data=b"{}", content_type="application/json",
+                webhook_url("stripe"),
+                data=b"{}",
+                content_type="application/json",
                 HTTP_STRIPE_SIGNATURE="valid_test_signature",
             )
 
-        assert Order.objects.filter(stripe_checkout_session_id="cs_test_abc").count() == 1
+        assert (
+            Order.objects.filter(stripe_checkout_session_id="cs_test_abc").count() == 1
+        )
 
     def test_chapa_webhook_requires_shared_secret(self, api_client, settings):
         settings.CHAPA_WEBHOOK_SECRET = "expected-secret"
         response = api_client.post(
-            webhook_url("chapa"), {"tx_ref": "CHAPA_abc", "status": "success"},
+            webhook_url("chapa"),
+            {"tx_ref": "CHAPA_abc", "status": "success"},
             HTTP_X_CHAPA_SIGNATURE="wrong-secret",
         )
         assert response.status_code == 400
@@ -201,13 +229,22 @@ class TestPaymentWebhook:
     @patch("orders.payment_views.EmailService.send_payment_receipt")
     @patch("orders.payment_views.EmailService.send_seller_order_notification")
     def test_chapa_webhook_success_creates_order(
-        self, mock_notify_seller, mock_receipt, api_client, test_user, test_product, settings
+        self,
+        mock_notify_seller,
+        mock_receipt,
+        api_client,
+        test_user,
+        test_product,
+        settings,
     ):
         settings.CHAPA_WEBHOOK_SECRET = "expected-secret"
-        self._pending_checkout(test_user, test_product, provider="chapa", ref="CHAPA_abc")
+        self._pending_checkout(
+            test_user, test_product, provider="chapa", ref="CHAPA_abc"
+        )
 
         response = api_client.post(
-            webhook_url("chapa"), {"tx_ref": "CHAPA_abc", "status": "success"},
+            webhook_url("chapa"),
+            {"tx_ref": "CHAPA_abc", "status": "success"},
             HTTP_X_CHAPA_SIGNATURE="expected-secret",
         )
         assert response.status_code == 200
@@ -219,10 +256,13 @@ class TestPaymentWebhook:
         self, api_client, test_user, test_product, settings
     ):
         settings.CHAPA_WEBHOOK_SECRET = "expected-secret"
-        self._pending_checkout(test_user, test_product, provider="chapa", ref="CHAPA_fail")
+        self._pending_checkout(
+            test_user, test_product, provider="chapa", ref="CHAPA_fail"
+        )
 
         response = api_client.post(
-            webhook_url("chapa"), {"tx_ref": "CHAPA_fail", "status": "failed"},
+            webhook_url("chapa"),
+            {"tx_ref": "CHAPA_fail", "status": "failed"},
             HTTP_X_CHAPA_SIGNATURE="expected-secret",
         )
         assert response.status_code == 200
@@ -237,15 +277,31 @@ class TestPaymentWebhook:
 @pytest.mark.django_db
 class TestVerifyPaymentView:
     @patch("orders.payment_views.PaymentService")
-    def test_verifies_payment_status(self, mock_service_cls, auth_client, test_user, test_product):
+    def test_verifies_payment_status(
+        self, mock_service_cls, auth_client, test_user, test_product
+    ):
         pc = PendingCheckout.objects.create(
-            user=test_user, provider="stripe", provider_reference="cs_test_verify",
-            cart_snapshot=[{"product_id": test_product.id, "quantity": 1, "price": str(test_product.price)}],
-            full_name="Test User", phone_number="0912345678", address="123 Test St",
-            city="Addis Ababa", subtotal=test_product.price, total=test_product.price,
+            user=test_user,
+            provider="stripe",
+            provider_reference="cs_test_verify",
+            cart_snapshot=[
+                {
+                    "product_id": test_product.id,
+                    "quantity": 1,
+                    "price": str(test_product.price),
+                }
+            ],
+            full_name="Test User",
+            phone_number="0912345678",
+            address="123 Test St",
+            city="Addis Ababa",
+            subtotal=test_product.price,
+            total=test_product.price,
         )
         mock_service = MagicMock()
-        mock_service.verify_payment.return_value = MagicMock(success=True, message="paid")
+        mock_service.verify_payment.return_value = MagicMock(
+            success=True, message="paid"
+        )
         mock_service_cls.return_value = mock_service
 
         url = reverse("payment-verify", args=["cs_test_verify"])
@@ -253,7 +309,9 @@ class TestVerifyPaymentView:
 
         assert response.status_code == 200
         assert response.data["paid"] is True
-        assert PaymentTransaction.objects.filter(transaction_id="cs_test_verify", kind="verify").exists()
+        assert PaymentTransaction.objects.filter(
+            transaction_id="cs_test_verify", kind="verify"
+        ).exists()
 
     def test_unknown_transaction_returns_404(self, auth_client):
         url = reverse("payment-verify", args=["cs_test_doesnotexist"])
@@ -268,17 +326,27 @@ class TestVerifyPaymentView:
 
 @pytest.mark.django_db
 class TestPaymentTransactionHistoryView:
-    def test_lists_only_own_transactions(self, auth_client, test_user, django_user_model):
+    def test_lists_only_own_transactions(
+        self, auth_client, test_user, django_user_model
+    ):
         other_user = django_user_model.objects.create_user(
             username="other", email="other@test.com", password="SecurePass123"
         )
         PaymentTransaction.objects.create(
-            user=test_user, provider="stripe", kind="initialize",
-            transaction_id="cs_mine", amount=Decimal("10.00"), success=True,
+            user=test_user,
+            provider="stripe",
+            kind="initialize",
+            transaction_id="cs_mine",
+            amount=Decimal("10.00"),
+            success=True,
         )
         PaymentTransaction.objects.create(
-            user=other_user, provider="stripe", kind="initialize",
-            transaction_id="cs_not_mine", amount=Decimal("10.00"), success=True,
+            user=other_user,
+            provider="stripe",
+            kind="initialize",
+            transaction_id="cs_not_mine",
+            amount=Decimal("10.00"),
+            success=True,
         )
 
         url = reverse("payment-history")
@@ -298,14 +366,18 @@ class TestPaymentTransactionHistoryView:
 @pytest.mark.django_db
 class TestRefundPaymentView:
     @patch("orders.payment_views.PaymentService")
-    def test_admin_can_refund_paid_order(self, mock_service_cls, admin_client, test_order):
+    def test_admin_can_refund_paid_order(
+        self, mock_service_cls, admin_client, test_order
+    ):
         test_order.status = "paid"
         test_order.payment_method = "stripe"
         test_order.stripe_checkout_session_id = "cs_test_refund"
         test_order.save()
 
         mock_service = MagicMock()
-        mock_service.refund_payment.return_value = MagicMock(success=True, transaction_id="re_test_123", message="")
+        mock_service.refund_payment.return_value = MagicMock(
+            success=True, transaction_id="re_test_123", message=""
+        )
         mock_service_cls.return_value = mock_service
 
         url = reverse("order-refund", args=[test_order.order_number])
@@ -314,7 +386,9 @@ class TestRefundPaymentView:
         assert response.status_code == 200
         test_order.refresh_from_db()
         assert test_order.status == "refunded"
-        assert PaymentTransaction.objects.filter(order=test_order, kind="refund", success=True).exists()
+        assert PaymentTransaction.objects.filter(
+            order=test_order, kind="refund", success=True
+        ).exists()
 
     def test_non_admin_cannot_refund(self, auth_client, test_order):
         test_order.status = "paid"
