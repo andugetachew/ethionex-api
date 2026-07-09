@@ -9,9 +9,9 @@
 ![Celery](https://img.shields.io/badge/Celery-enabled-green)
 ![Docker](https://img.shields.io/badge/Docker-enabled-blue)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
+[![CI](https://github.com/andugetachew/ethionex-api/actions/workflows/ci.yml/badge.svg)](https://github.com/andugetachew/ethionex-api/actions)
 
-
->A Multi-vendor marketplace backend built with Django REST Framework, PostgreSQL, Redis, Celery, Django Channels, and Docker. Buyers can browse and purchase products, sellers manage inventory and orders, and administrators oversee the platform.
+>A production-ready multi-vendor marketplace backend built with Django REST Framework, PostgreSQL, Redis, Celery, Django Channels, and Docker. Buyers browse and purchase products, sellers manage inventory and orders, and administrators oversee the platform.
 
 ## 🌐 Live Demo
 
@@ -42,10 +42,6 @@
 ### Dashboards & Analytics
 ![Dashboards and Analytics](docs/swagger3.png)
 
-## 📊 Quality Metrics
-
-
->A production-ready multi-vendor e-commerce marketplace REST API — buyers browse and place orders, sellers manage inventory and track revenue, admins oversee the platform. Built with Django REST Framework, PostgreSQL, Redis, Celery, Django Channels (WebSockets), and Docker.
 
 ---
 
@@ -64,50 +60,19 @@ Most portfolio APIs are CRUD wrappers. EthioNex handles real production concerns
 
 ---
 
-## 🚀 Key Features
 
-### 🔐 Authentication & Security
-- JWT access + refresh tokens with rotation and blacklisting
-- Email verification with 24-hour expiring tokens
-- Password reset via secure one-time links
-- Rate limiting: login (5/min), register (3/min), orders (10/min)
+## 🚀 Features
 
-### 🛒 Product & Inventory
-- Product listings with search, filtering, and ordering
-- Redis-backed caching on list and detail endpoints
-- Immediate cache invalidation on any write operation
-- Atomic stock reservation with `select_for_update()` to prevent overselling
-- Low stock alerts sent to sellers via Celery
-
-### 📦 Order Management
-- Strict state machine: `pending → paid → processing → shipped → delivered`
-- Stock automatically restored on cancellation
-- Full status history log with actor, timestamp, and reason
-- Public order tracking by order number or tracking number
-- Bulk status updates for admin
-
-### 🔔 Real-Time
-- WebSocket notifications via Django Channels
-- Per-user notification rooms with mark-as-read support
-- Per-order tracking rooms with ownership verification
-
-### ⚙️ Background Tasks
-- Welcome, verification, password reset, and order confirmation emails
-- Seller new-order notifications
-- Expired cart cleanup (30-day threshold)
-
-### 💳 Payments
-- Pay-first checkout: cart is snapshotted into a `PendingCheckout`; the real `Order` is only created once payment is confirmed, so abandoned checkouts never reserve stock or create orphaned orders
-- Two providers behind one interface: **Stripe** (real API, restricted to test-mode keys — `sk_test_...` only, enforced in code) and **Chapa** (fully simulated — no live account needed yet, since production use requires business registration)
-- Signature-verified Stripe webhooks; shared-secret-verified simulated Chapa webhooks
-- On confirmed payment: order created → stock decremented → seller notified by email → buyer receipt sent
-- Payment verification endpoint for polling status after checkout redirect
-- Full payment transaction history per user (initialize, webhook confirmation, verify, refund attempts)
-- Refund API — real Stripe test-mode refunds, simulated for Chapa
-
-### 📊 Dashboards
-- **Seller**: product count, order stats, revenue breakdown
-- **Admin**: user analytics, top products, top sellers, daily sales reports
+- JWT authentication with email verification
+- Multi-vendor marketplace (buyers, sellers, admins)
+- Product catalog with filtering and search
+- Shopping cart and order management
+- Atomic inventory reservation
+- Stripe (test mode) + simulated Chapa payments
+- Redis caching and rate limiting
+- Celery background tasks
+- Real-time notifications via WebSockets
+- Seller and admin dashboards
 
 ---
 
@@ -129,43 +94,53 @@ Most portfolio APIs are CRUD wrappers. EthioNex handles real production concerns
 
 ## 🏗 Architecture
 
-Client → Django REST API (Gunicorn)
-↓              ↓
-PostgreSQL         Redis
-(Primary DB)  (Cache + Broker)
-↓
-Celery Workers
-Django Channels
+```text
+Client
+   │
+   ▼
+Django REST API (Gunicorn)
+   │
+   ├── PostgreSQL
+   ├── Redis (Cache + Broker)
+   ├── Celery Workers
+   └── Django Channels (WebSockets)
+```
 ---
 
 ## 📁 Project Structure
+
+```text
 ethionex-api/
-├── users/               # Auth, registration, password reset, newsletter
-├── products/            # Products, categories, reviews, wishlist
-├── cart/                # Shopping cart
-├── orders/              # Order management, state machine, tracking
-│   ├── state_machine.py # Validated transitions + status logging
-│   ├── services.py      # InventoryService (atomic stock ops)
+├── users/
+├── products/
+├── cart/
+├── orders/
+│   ├── state_machine.py
+│   ├── services.py
 │   └── tracking_views.py
-├── notifications/       # WebSocket consumers, EmailService, Celery tasks
-├── dashboard/           # Seller dashboard
-├── admin_dashboard/     # Admin analytics and user management
-├── audit/               # Request logging middleware
-└── utils/               # CacheService, cache keys, logging config
+├── notifications/
+├── dashboard/
+├── admin_dashboard/
+├── audit/
+└── utils/
+```
 
 ---
 
 ## 📡 API Endpoints
 
-### Authentication
+## 📡 API Overview
 
-Authentication    /api/v1/auth/*
-Products          /api/v1/products/*
-Cart              /api/v1/cart/*
-Orders            /api/v1/orders/*
-Payments          /api/v1/orders/checkout/*
-Dashboards        /api/v1/seller/*, /api/v1/admin/*
-WebSockets        /ws/*
+| Resource | Endpoint |
+|----------|----------|
+| Authentication | `/api/v1/auth/*` |
+| Products | `/api/v1/products/*` |
+| Cart | `/api/v1/cart/*` |
+| Orders | `/api/v1/orders/*` |
+| Payments | `/api/v1/orders/checkout/*` |
+| Dashboards | `/api/v1/seller/*`, `/api/v1/admin/*` |
+| WebSockets | `/ws/*` |
+| Monitoring | `/health/` |
 
 ---
 
@@ -242,10 +217,13 @@ docker-compose exec web pytest tests/unit/test_state_machine.py -v
 
 
 ### Test Structure
+
+```text
 tests/
-├── integration/    # Full HTTP flow tests (auth, cart, orders, notifications)
-├── unit/           # Direct function/view tests (models, tasks, permissions)
-└── performance/    # Rate limiting and caching behavior
+├── integration/
+├── unit/
+└── performance/
+```
 
 ---
 
@@ -281,11 +259,12 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
+Once the application is running:
 
-- API: `http://localhost:8000`
-- Swagger Docs: `http://localhost:8000/api/docs/`
-- ReDoc: `http://localhost:8000/api/redoc/`
-
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/api/docs/
+- ReDoc: http://localhost:8000/api/redoc/
+- Health: http://localhost:8000/health/
 ---
 
 ## 🔑 Environment Variables
