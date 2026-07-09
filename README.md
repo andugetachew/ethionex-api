@@ -1,7 +1,7 @@
 # EthioNex API — Multi-Vendor Marketplace
 
-![Coverage](https://img.shields.io/badge/coverage-83%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-321%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-339%20passed-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![Django](https://img.shields.io/badge/django-5.2-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
@@ -19,13 +19,14 @@
 | **ReDoc** | https://ethionex-api.onrender.com/api/redoc/ |
 | **Health Check** | https://ethionex-api.onrender.com/health/ |
 
-- 321 automated tests
-- 83% code coverage
+- 339 automated tests
+- 85% code coverage
 - Unit + integration + performance test layers
 - 0 failed tests
 - Order state machine tests included
 - Inventory atomic operation tests included
 - Rate limiting and caching benchmark tests included
+- Payment integration tests (Stripe test-mode + simulated Chapa) included
 
 ## 📸 API Documentation Preview
 
@@ -95,6 +96,15 @@ Most portfolio APIs are CRUD wrappers. EthioNex handles real production concerns
 - Welcome, verification, password reset, and order confirmation emails
 - Seller new-order notifications
 - Expired cart cleanup (30-day threshold)
+
+### 💳 Payments
+- Pay-first checkout: cart is snapshotted into a `PendingCheckout`; the real `Order` is only created once payment is confirmed, so abandoned checkouts never reserve stock or create orphaned orders
+- Two providers behind one interface: **Stripe** (real API, restricted to test-mode keys — `sk_test_...` only, enforced in code) and **Chapa** (fully simulated — no live account needed yet, since production use requires business registration)
+- Signature-verified Stripe webhooks; shared-secret-verified simulated Chapa webhooks
+- On confirmed payment: order created → stock decremented → seller notified by email → buyer receipt sent
+- Payment verification endpoint for polling status after checkout redirect
+- Full payment transaction history per user (initialize, webhook confirmation, verify, refund attempts)
+- Refund API — real Stripe test-mode refunds, simulated for Chapa
 
 ### 📊 Dashboards
 - **Seller**: product count, order stats, revenue breakdown
@@ -183,6 +193,16 @@ ethionex-api/
 | GET | `/api/v1/orders/track/` | Public tracking by order number | Public |
 | POST | `/api/v1/orders/admin/bulk-update/` | Bulk order status update | Admin |
 
+### Payments (Stripe test-mode / simulated Chapa)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/v1/orders/checkout/<stripe\|chapa>/` | Start checkout for current cart | JWT |
+| POST | `/api/v1/orders/webhook/<stripe\|chapa>/` | Provider payment confirmation | Public (signature-verified) |
+| GET | `/api/v1/orders/payments/<transaction_id>/verify/` | Verify a payment's status | JWT |
+| GET | `/api/v1/orders/payments/history/` | List own payment transaction history | JWT |
+| POST | `/api/v1/orders/<order_number>/refund/` | Refund a paid order | Admin |
+
 ### Dashboards
 
 | Method | Endpoint | Description | Auth |
@@ -240,6 +260,22 @@ curl -X POST http://localhost:8000/api/v1/orders/ \
 curl http://localhost:8000/api/v1/orders/track/?order_number=ORD-20260608-0001
 ```
 
+**Start a Stripe test-mode checkout (cart → payment → order):**
+```bash
+curl -X POST http://localhost:8000/api/v1/orders/checkout/stripe/ \
+  -H "Authorization: Bearer <your_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "Andualem Getachew",
+    "phone_number": "0923069966",
+    "address": "Bole Road",
+    "city": "Addis Ababa"
+  }'
+# → returns a Stripe test Checkout URL. Pay with card 4242 4242 4242 4242
+# (any future expiry, any CVC). The Order is created only after Stripe
+# confirms payment via webhook.
+```
+
 ---
 
 ## 🧪 Testing
@@ -255,7 +291,7 @@ docker-compose exec web pytest --cov=. --cov-report=term-missing
 docker-compose exec web pytest tests/unit/test_state_machine.py -v
 ```
 
-### ✅ Test Results: 321 passed — 83% coverage
+### ✅ Test Results: 339 passed — 85% coverage
 
 | Module | Coverage |
 |--------|----------|
@@ -267,8 +303,10 @@ docker-compose exec web pytest tests/unit/test_state_machine.py -v
 | `orders/serializers.py` | 98% |
 | `admin_dashboard/views.py` | 97% |
 | `notifications/email_service.py` | 97% |
+| `orders/models.py` | 96% |
 | `users/views.py` | 93% |
 | `orders/tracking_views.py` | 91% |
+| `orders/payment_views.py` | 85% |
 
 ### Test Structure
 tests/
@@ -342,6 +380,16 @@ EMAIL_USE_TLS=True
 DEFAULT_FROM_EMAIL=noreply@ethionex.com
 
 FRONTEND_URL=http://localhost:3000
+
+# Payments — Stripe runs in TEST MODE ONLY (sk_test_/pk_test_ keys),
+# Chapa is fully simulated (no live account required yet)
+CHAPA_API_KEY=your-chapa-api-key
+CHAPA_WEBHOOK_SECRET=your-chapa-webhook-secret
+STRIPE_API_KEY=sk_test_your-stripe-test-secret-key
+STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-test-publishable-key
+STRIPE_WEBHOOK_SECRET=whsec_your-stripe-test-webhook-secret
+STRIPE_CURRENCY=usd
+CHAPA_CURRENCY=ETB
 ```
 
 ---
