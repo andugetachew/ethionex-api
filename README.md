@@ -10,6 +10,9 @@
 ![Docker](https://img.shields.io/badge/Docker-enabled-blue)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 
+
+>A Multi-vendor marketplace backend built with Django REST Framework, PostgreSQL, Redis, Celery, Django Channels, and Docker. Buyers can browse and purchase products, sellers manage inventory and orders, and administrators oversee the platform.
+
 ## 🌐 Live Demo
 
 | | URL |
@@ -19,14 +22,12 @@
 | **ReDoc** | https://ethionex-api.onrender.com/api/redoc/ |
 | **Health Check** | https://ethionex-api.onrender.com/health/ |
 
+## 📊 Quality Metrics
+
 - 339 automated tests
 - 85% code coverage
-- Unit + integration + performance test layers
-- 0 failed tests
-- Order state machine tests included
-- Inventory atomic operation tests included
-- Rate limiting and caching benchmark tests included
-- Payment integration tests (Stripe test-mode + simulated Chapa) included
+- Unit, integration, and performance tests
+- Includes inventory, payment, and order workflow testing
 
 ## 📸 API Documentation Preview
 
@@ -41,8 +42,6 @@
 ### Dashboards & Analytics
 ![Dashboards and Analytics](docs/swagger3.png)
 
-### Notifications & Tracking
-![Notifications and Tracking](docs/swagger4.png)
 ## 📊 Quality Metrics
 
 
@@ -160,65 +159,13 @@ ethionex-api/
 
 ### Authentication
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/v1/auth/register/` | Register with email verification | Public |
-| POST | `/api/v1/auth/login/` | Login, receive JWT tokens | Public |
-| POST | `/api/v1/auth/verify-email/` | Verify email with token | Public |
-| POST | `/api/v1/auth/resend-verification/` | Resend verification email | Public |
-| POST | `/api/v1/auth/password-reset/` | Request password reset link | Public |
-| POST | `/api/v1/auth/password-reset/confirm/` | Confirm reset with token | Public |
-| GET/PATCH | `/api/v1/auth/profile/` | View and update profile | JWT |
-
-### Products
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/v1/products/` | List products (cached, filterable) | Public |
-| POST | `/api/v1/products/` | Create product | Seller |
-| GET | `/api/v1/products/<id>/` | Product detail (increments views) | Public |
-| PATCH/DELETE | `/api/v1/products/<id>/` | Update or delete own product | Seller |
-| GET/POST | `/api/v1/products/<id>/reviews/` | List or create review | Public/JWT |
-| POST | `/api/v1/wishlist/add/` | Add product to wishlist | JWT |
-| DELETE | `/api/v1/wishlist/clear/` | Clear entire wishlist | JWT |
-
-### Cart & Orders
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET/POST | `/api/v1/cart/` | View or add to cart | JWT |
-| GET/POST | `/api/v1/orders/` | List orders / create from cart | JWT |
-| GET/PUT | `/api/v1/orders/<order_number>/` | Order detail / cancel pending | JWT |
-| PATCH | `/api/v1/orders/<order_number>/` | Update order status | Admin |
-| GET | `/api/v1/orders/track/` | Public tracking by order number | Public |
-| POST | `/api/v1/orders/admin/bulk-update/` | Bulk order status update | Admin |
-
-### Payments (Stripe test-mode / simulated Chapa)
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/v1/orders/checkout/<stripe\|chapa>/` | Start checkout for current cart | JWT |
-| POST | `/api/v1/orders/webhook/<stripe\|chapa>/` | Provider payment confirmation | Public (signature-verified) |
-| GET | `/api/v1/orders/payments/<transaction_id>/verify/` | Verify a payment's status | JWT |
-| GET | `/api/v1/orders/payments/history/` | List own payment transaction history | JWT |
-| POST | `/api/v1/orders/<order_number>/refund/` | Refund a paid order | Admin |
-
-### Dashboards
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/v1/seller/stats/` | Seller analytics | Seller |
-| GET | `/api/v1/admin/stats/` | Platform overview stats | Admin |
-| GET | `/api/v1/admin/reports/sales/` | Daily sales report | Admin |
-| GET | `/api/v1/admin/reports/top-products/` | Top products by units sold | Admin |
-| GET | `/api/v1/admin/reports/top-sellers/` | Top sellers by revenue | Admin |
-
-### Real-Time (WebSocket)
-
-| Type | Endpoint | Description | Auth |
-|------|----------|-------------|------|
-| WS | `ws://.../ws/notifications/` | Real-time notification stream | JWT |
-| WS | `ws://.../ws/orders/<id>/track/` | Real-time order tracking | JWT (owner) |
+Authentication    /api/v1/auth/*
+Products          /api/v1/products/*
+Cart              /api/v1/cart/*
+Orders            /api/v1/orders/*
+Payments          /api/v1/orders/checkout/*
+Dashboards        /api/v1/seller/*, /api/v1/admin/*
+WebSockets        /ws/*
 
 ---
 
@@ -293,20 +240,6 @@ docker-compose exec web pytest tests/unit/test_state_machine.py -v
 
 ### ✅ Test Results: 339 passed — 85% coverage
 
-| Module | Coverage |
-|--------|----------|
-| `users/tasks.py` | 100% |
-| `orders/services.py` | 100% |
-| `orders/state_machine.py` | 100% |
-| `notifications/views.py` | 100% |
-| `utils/cache_service.py` | 98% |
-| `orders/serializers.py` | 98% |
-| `admin_dashboard/views.py` | 97% |
-| `notifications/email_service.py` | 97% |
-| `orders/models.py` | 96% |
-| `users/views.py` | 93% |
-| `orders/tracking_views.py` | 91% |
-| `orders/payment_views.py` | 85% |
 
 ### Test Structure
 tests/
@@ -358,38 +291,13 @@ python manage.py runserver
 ## 🔑 Environment Variables
 
 ```env
-SECRET_KEY=your-secret-key
-DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-DB_NAME=ethionex_db
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-DB_HOST=db
-DB_PORT=5432
-
-REDIS_URL=redis://redis:6379/0
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
-
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_HOST_USER=your@email.com
-EMAIL_HOST_PASSWORD=yourpassword
-EMAIL_USE_TLS=True
-DEFAULT_FROM_EMAIL=noreply@ethionex.com
-
-FRONTEND_URL=http://localhost:3000
-
-# Payments — Stripe runs in TEST MODE ONLY (sk_test_/pk_test_ keys),
-# Chapa is fully simulated (no live account required yet)
-CHAPA_API_KEY=your-chapa-api-key
-CHAPA_WEBHOOK_SECRET=your-chapa-webhook-secret
-STRIPE_API_KEY=sk_test_your-stripe-test-secret-key
-STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-test-publishable-key
-STRIPE_WEBHOOK_SECRET=whsec_your-stripe-test-webhook-secret
-STRIPE_CURRENCY=usd
-CHAPA_CURRENCY=ETB
+SECRET_KEY=
+DATABASE_URL=
+REDIS_URL=
+EMAIL_HOST_USER=
+STRIPE_API_KEY=
+CHAPA_API_KEY=
+...
 ```
 
 ---
