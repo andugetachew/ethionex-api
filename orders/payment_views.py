@@ -326,7 +326,7 @@ class PaymentWebhookView(APIView):
         cart = Cart.objects.filter(user=pending_checkout.user).first()
         if cart:
             cart.items.filter(
-                product_id__in=[l["product_id"] for l in pending_checkout.cart_snapshot]
+                product_id__in=[item["product_id"] for item in pending_checkout.cart_snapshot]
             ).delete()
 
         pending_checkout.consumed_at = timezone.now()
