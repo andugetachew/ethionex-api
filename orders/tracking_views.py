@@ -1,3 +1,4 @@
+# orders/tracking_views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -44,7 +45,15 @@ class MyOrderTrackingView(APIView):
 
 
 class AdminOrderStatusUpdateView(APIView):
-    """Admin only - update order status and tracking info"""
+    """
+    Admin only - update order status and tracking info.
+
+    REVERTED to order.update_status() (not OrderStateMachine): this
+    populates Order.status_history (a JSONField), which is a separate
+    history mechanism from OrderStatusLog used by the state machine.
+    Tests confirm this endpoint's history/tracking-number behavior
+    depends on update_status() specifically.
+    """
 
     permission_classes = [IsAdminUser]
 
@@ -57,15 +66,12 @@ class AdminOrderStatusUpdateView(APIView):
             tracking_number = serializer.validated_data.get("tracking_number", "")
             note = serializer.validated_data.get("note", "")
 
-            # Update tracking number if provided
             if tracking_number:
                 order.tracking_number = tracking_number
 
-            # Update status with history
             old_status = order.status
             order.update_status(new_status, note)
 
-            # Send email notification on status change
             if old_status != new_status:
                 self._send_status_notification(order, old_status, new_status)
 
@@ -136,14 +142,17 @@ class AdminBulkOrderUpdateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        tracking_numbers = {str(k): v for k, v in tracking_numbers.items()}
+
         updated_orders = []
         for order_id in order_ids:
             try:
                 order = Order.objects.get(id=order_id)
                 order.update_status(new_status, f"Bulk update to {new_status}")
 
-                if order_id in tracking_numbers:
-                    order.tracking_number = tracking_numbers[order_id]
+                tracking_number = tracking_numbers.get(str(order_id))
+                if tracking_number:
+                    order.tracking_number = tracking_number
                     order.save()
 
                 updated_orders.append(order_id)

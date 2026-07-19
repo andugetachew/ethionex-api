@@ -106,3 +106,4 @@ wcwidth==0.7.0
 whitenoise==6.9.0
 zope.interface==8.4
 stripe==11.4.1
+pytest-asyncio

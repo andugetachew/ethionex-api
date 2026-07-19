@@ -1,3 +1,4 @@
+# products/views.py
 from rest_framework import generics, permissions, viewsets, filters, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -24,11 +25,6 @@ from ethionex_api.pagination import StandardPagination, LargePagination, SmallPa
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(is_active=True)
-    serializer_class = ProductSerializer
-
-
 class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -44,6 +40,12 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
+# FIX: removed the earlier duplicate ProductViewSet definition (no
+# permission_classes at all) that this one silently overwrote — dead,
+# confusing clutter with no functional effect since nothing referenced
+# the name in between, but worth cleaning up since it's exactly the
+# kind of duplicate-definition mistake that caused a real bug elsewhere
+# in this codebase (orders/serializers.py's OrderItemSerializer).
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
@@ -347,11 +349,10 @@ class AdminProductViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    """Category ViewSet for router"""
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsSeller | IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = StandardPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]

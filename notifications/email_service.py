@@ -1,3 +1,4 @@
+# notifications/email_service.py
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -91,6 +92,28 @@ Payment received for order {order.order_number}
 
         try:
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [seller.email])
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def send_admin_alert(subject, message):
+       
+        recipients = list(
+            User.objects.filter(is_staff=True, is_active=True)
+            .exclude(email="")
+            .values_list("email", flat=True)
+        )
+        if not recipients:
+            recipients = [settings.DEFAULT_FROM_EMAIL]
+
+        try:
+            send_mail(
+                f"[EthioNex ALERT] {subject}",
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                recipients,
+            )
             return True
         except Exception:
             return False

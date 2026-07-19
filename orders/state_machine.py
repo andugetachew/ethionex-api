@@ -1,7 +1,7 @@
 # orders/state_machine.py
 from enum import Enum
 from django.core.exceptions import ValidationError
-from django.utils import timezone  # <-- ADD THIS
+from django.utils import timezone
 from .services import InventoryService
 
 
@@ -12,16 +12,22 @@ class OrderState(Enum):
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
-
+    NEEDS_REVIEW = "needs_review"  
 
 class OrderStateMachine:
     VALID_TRANSITIONS = {
         OrderState.PENDING: [OrderState.PAID, OrderState.CANCELLED],
-        OrderState.PAID: [OrderState.PROCESSING, OrderState.CANCELLED],
+        OrderState.PAID: [
+            OrderState.PROCESSING,
+            OrderState.CANCELLED,
+            OrderState.NEEDS_REVIEW,  # FIX: paid -> needs_review (stock failure)
+        ],
         OrderState.PROCESSING: [OrderState.SHIPPED, OrderState.CANCELLED],
         OrderState.SHIPPED: [OrderState.DELIVERED],
         OrderState.DELIVERED: [],
         OrderState.CANCELLED: [],
+       
+        OrderState.NEEDS_REVIEW: [OrderState.PROCESSING, OrderState.CANCELLED],
     }
 
     @classmethod

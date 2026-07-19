@@ -1,3 +1,4 @@
+# cart/views.py
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -53,12 +54,28 @@ class UpdateCartItemView(APIView):
 
     def put(self, request, item_id):
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-        quantity = request.data.get("quantity", 1)
+
+        raw_quantity = request.data.get("quantity", 1)
+        try:
+            quantity = int(raw_quantity)
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "quantity must be a whole number."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if quantity <= 0:
             cart_item.delete()
             message = "Item removed from cart"
         else:
+            if quantity > cart_item.product.stock_quantity:
+                return Response(
+                    {
+                        "error": f"Insufficient stock for {cart_item.product.title}. "
+                        f"Available: {cart_item.product.stock_quantity}"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             cart_item.quantity = quantity
             cart_item.save()
             message = "Cart updated"

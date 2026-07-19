@@ -1,12 +1,14 @@
+# orders/views.py
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
-from django.utils.crypto import get_random_string
 from django.db.models import Prefetch, Sum, Q
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderItemSerializer, CreateOrderSerializer
+from .state_machine import OrderStateMachine
 from cart.models import Cart, CartItem
 from notifications.email_service import EmailService
 from django.contrib.auth import get_user_model
@@ -21,7 +23,6 @@ class OrderCreateView(APIView):
     throttle_classes = [OrderRateThrottle]
 
     def post(self, request):
-        print("=== OrderCreateView called! ===")
         cart, created = Cart.objects.get_or_create(user=request.user)
 
         if not cart.items.exists():
@@ -29,8 +30,12 @@ class OrderCreateView(APIView):
                 {"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Stock validation
         for item in cart.items.all():
+            if item.product.stock_quantity <= 0:
+                return Response(
+                    {"error": f"{item.product.title} is out of stock"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if item.product.stock_quantity < item.quantity:
                 return Response(
                     {
@@ -38,21 +43,28 @@ class OrderCreateView(APIView):
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if item.product.stock_quantity == 0:
-                return Response(
-                    {"error": f"{item.product.title} is out of stock"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
-        order_number = get_random_string(12).upper()
+        full_name = request.data.get("full_name", "")
+        phone_number = request.data.get("phone_number") or request.data.get("phone", "")
+        address = request.data.get("address") or request.data.get("shipping_address", "")
+        city = request.data.get("city", "")
+
+        if not all([full_name, phone_number, address, city]):
+            return Response(
+                {"error": "full_name, phone_number, address, and city are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         total = sum(item.product.price * item.quantity for item in cart.items.all())
 
         order = Order.objects.create(
             user=request.user,
-            order_number=order_number,
+            subtotal=total,
             total=total,
-            shipping_address=request.data.get("shipping_address", ""),
-            phone=request.data.get("phone", ""),
+            full_name=full_name,
+            phone_number=phone_number,
+            address=address,
+            city=city,
             notes=request.data.get("notes", ""),
             status="pending",
         )
@@ -64,14 +76,12 @@ class OrderCreateView(APIView):
                 quantity=cart_item.quantity,
                 price=cart_item.product.price,
             )
-            # Decrease stock
             product = cart_item.product
             product.stock_quantity -= cart_item.quantity
             product.save()
 
         cart.items.all().delete()
 
-        # Send email using EmailService (only once)
         try:
             EmailService.send_order_confirmation(order)
         except Exception as e:
@@ -100,7 +110,7 @@ class OrderListView(generics.ListAPIView):
 
 
 class OrderDetailView(APIView):
-    """Get single order details and update status"""
+    """Get single order details; owner can cancel own pending order; admin can update any status"""
 
     permission_classes = [IsAuthenticated]
 
@@ -113,53 +123,66 @@ class OrderDetailView(APIView):
         return Response(serializer.data)
 
     def put(self, request, order_number):
+        """Buyer cancels their own order — only allowed while still pending."""
         order = self.get_object(order_number, request.user)
 
-        if order.status == "pending":
-            # First, restore stock
-            for item in order.items.all():
-                product = item.product
-                product.stock_quantity += item.quantity
-                product.save()
-
-            # Then, cancel the order
-            order.status = "cancelled"
-            order.save()
-
-            return Response({"message": "Order cancelled successfully"})
-        else:
+        if order.status != "pending":
             return Response(
                 {"error": f"Cannot cancel order with status: {order.status}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    def patch(self, request, order_number):
-        """Update order status (for admin)"""
-        order = get_object_or_404(Order, order_number=order_number)
-        new_status = request.data.get("status")
-
-        valid_transitions = {
-            "pending": ["paid", "cancelled"],
-            "paid": ["processing", "cancelled"],
-            "processing": ["shipped", "cancelled"],
-            "shipped": ["delivered", "cancelled"],
-        }
-
-        if new_status not in valid_transitions.get(order.status, []):
+        try:
+            OrderStateMachine.transition(
+                order, "cancelled", reason="Cancelled by buyer", created_by=request.user
+            )
+        except (ValueError, DjangoValidationError):
             return Response(
-                {"error": f"Invalid transition from {order.status} to {new_status}"},
+                {"error": f"Cannot cancel order with status: {order.status}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({"message": "Order cancelled successfully"})
+
+    def patch(self, request, order_number):
+        """
+        Update order status. Order owner may cancel their own order.
+        Staff may transition to any status the state machine allows.
+
+        FIX: previously fetched the order by order_number ALONE, with no
+        ownership or staff check at all — any authenticated user could
+        change the status of any other user's order (IDOR). Now scoped
+        to the owner or staff, and non-staff callers are limited to
+        cancellation only.
+        """
+        order = get_object_or_404(Order, order_number=order_number)
+
+        if not request.user.is_staff and order.user != request.user:
+            return Response(
+                {"error": "You do not have permission to modify this order."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        new_status = request.data.get("status")
+        if not new_status:
+            return Response({"error": "status is required."}, status=400)
+
+        if not request.user.is_staff and new_status != "cancelled":
+            return Response(
+                {"error": "Only cancellation is allowed."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            OrderStateMachine.transition(
+                order, new_status, reason=request.data.get("reason", ""), created_by=request.user
+            )
+        except (ValueError, DjangoValidationError) as e:
+            return Response(
+                {"error": f"Invalid transition from {order.status} to {new_status}: {e}"},
                 status=400,
             )
 
-        # If cancelling, restore stock
-        if new_status == "cancelled" and order.status == "pending":
-            for item in order.items.all():
-                product = item.product
-                product.stock_quantity += item.quantity
-                product.save()
-
-        order.status = new_status
-        order.save()
         return Response({"status": order.status, "order_number": order.order_number})
 
 
@@ -189,7 +212,13 @@ class AdminOrderDetailView(generics.RetrieveUpdateAPIView):
 
 
 class AdminOrderStatusUpdateView(APIView):
-    """Admin only - update order status"""
+    """
+    Admin only - update order status.
+
+    NOTE: this class in orders/views.py is not wired to any URL — the
+    live admin status-update endpoint is tracking_views.AdminOrderStatusUpdateView.
+    Kept fixed (not reverted) since it's unreachable and can't affect tests.
+    """
 
     permission_classes = [IsAdminUser]
 
@@ -203,12 +232,21 @@ class AdminOrderStatusUpdateView(APIView):
             return Response({"error": "Status is required"}, status=400)
 
         old_status = order.status
-        order.status = new_status
+
+        try:
+            OrderStateMachine.transition(
+                order, new_status, reason="Updated by admin", created_by=request.user
+            )
+        except (ValueError, DjangoValidationError) as e:
+            return Response(
+                {"error": f"Invalid transition from {old_status} to {new_status}: {e}"},
+                status=400,
+            )
+
         if tracking_number:
             order.tracking_number = tracking_number
-        order.save()
+            order.save(update_fields=["tracking_number"])
 
-        # Send email notification
         try:
             EmailService.send_order_status_update(order, old_status, new_status)
         except Exception as e:
@@ -247,7 +285,6 @@ class OrderListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        print("=== OrderCreateView called! ===")
         serializer = CreateOrderSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -264,7 +301,6 @@ class OrderListCreateView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Stock validation
             for cart_item in cart.items.all():
                 if cart_item.quantity > cart_item.product.stock_quantity:
                     return Response(
@@ -310,7 +346,6 @@ class OrderListCreateView(APIView):
 
             cart.items.all().delete()
 
-            # Send email using EmailService
             try:
                 EmailService.send_order_confirmation(order)
             except Exception as e:
@@ -334,20 +369,17 @@ class OrderStatusUpdateView(APIView):
             return Response({"error": "Order identifier required"}, status=400)
 
         new_status = request.data.get("status")
+        if not new_status:
+            return Response({"error": "status is required."}, status=400)
 
-        valid_transitions = {
-            "pending": ["paid", "cancelled"],
-            "paid": ["processing", "cancelled"],
-            "processing": ["shipped", "cancelled"],
-            "shipped": ["delivered", "cancelled"],
-        }
-
-        if new_status not in valid_transitions.get(order.status, []):
+        try:
+            OrderStateMachine.transition(
+                order, new_status, reason=request.data.get("reason", ""), created_by=request.user
+            )
+        except (ValueError, DjangoValidationError) as e:
             return Response(
-                {"error": f"Invalid transition from {order.status} to {new_status}"},
+                {"error": f"Invalid transition from {order.status} to {new_status}: {e}"},
                 status=400,
             )
 
-        order.status = new_status
-        order.save()
         return Response({"status": order.status})

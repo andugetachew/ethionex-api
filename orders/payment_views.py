@@ -24,6 +24,7 @@ Flow:
 """
 
 import logging
+from decimal import Decimal, InvalidOperation
 
 import stripe
 from django.conf import settings
@@ -55,11 +56,6 @@ PROVIDER_CURRENCY = {
     "stripe": lambda: settings.STRIPE_CURRENCY,
     "chapa": lambda: settings.CHAPA_CURRENCY,
 }
-
-
-# ---------------------------------------------------------------------------
-# 1 & 2. Payment initialization, across multiple providers
-# ---------------------------------------------------------------------------
 
 
 class CreateCheckoutView(APIView):
@@ -165,7 +161,6 @@ class CreateCheckoutView(APIView):
             cancel_url=cancel_url,
         )
 
-        # --- Payment transaction history: log the initialization attempt ---
         PaymentTransaction.objects.create(
             user=request.user,
             order=None,
@@ -197,11 +192,6 @@ class CreateCheckoutView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-
-# ---------------------------------------------------------------------------
-# 3 & 5. Webhook handling -> Order Created -> Inventory Updated ->
-#          Seller Notified -> Receipt Generated
-# ---------------------------------------------------------------------------
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -288,7 +278,7 @@ class PaymentWebhookView(APIView):
             return
 
         if pending_checkout.consumed_at is not None:
-            return  # already processed — providers can send duplicate webhooks
+            return  
 
         if not paid:
             pending_checkout.consumed_at = timezone.now()
@@ -305,7 +295,7 @@ class PaymentWebhookView(APIView):
             )
             return
 
-        # --- Order Created ---
+       
         order = Order.objects.create(
             user=pending_checkout.user,
             status="paid",
@@ -329,7 +319,7 @@ class PaymentWebhookView(APIView):
         )
 
         sellers_to_notify = set()
-
+        stock_failures = []  
         for line in pending_checkout.cart_snapshot:
             product = Product.objects.select_for_update().get(id=line["product_id"])
             quantity = line["quantity"]
@@ -338,17 +328,52 @@ class PaymentWebhookView(APIView):
                 order=order, product=product, quantity=quantity, price=line["price"]
             )
 
-            # --- Inventory Updated ---
             try:
                 InventoryService.reserve_stock(product.id, quantity)
             except ValidationError as e:
-                logger.error(
-                    f"Stock reservation failed for paid order {order.order_number} "
-                    f"(product {product.id}): {e}"
+                logger.critical(
+                    f"Stock reservation FAILED for paid order {order.order_number} "
+                    f"(product {product.id}, qty {quantity}): {e}"
+                )
+                stock_failures.append(
+                    {"product_id": product.id, "product_title": getattr(product, "title", str(product.id)), "error": str(e)}
                 )
 
             if product.seller_id:
                 sellers_to_notify.add(product.seller)
+
+
+        if stock_failures:
+            order.status = "needs_review"
+            failure_note = "STOCK RESERVATION FAILURES (requires manual review): " + "; ".join(
+                f"{f['product_title']} (id={f['product_id']}): {f['error']}"
+                for f in stock_failures
+            )
+            order.notes = f"{order.notes}\n{failure_note}".strip() if order.notes else failure_note
+            order.save(update_fields=["status", "notes"])
+
+            PaymentTransaction.objects.create(
+                user=order.user,
+                order=order,
+                provider=provider,
+                kind="webhook",
+                transaction_id=provider_reference,
+                amount=order.total,
+                success=True,
+                message=f"Payment confirmed but stock reservation failed for {len(stock_failures)} item(s) — flagged for review",
+            )
+        else:
+          
+            PaymentTransaction.objects.create(
+                user=order.user,
+                order=order,
+                provider=provider,
+                kind="webhook",
+                transaction_id=provider_reference,
+                amount=order.total,
+                success=True,
+                message="Payment confirmed",
+            )
 
         cart = Cart.objects.filter(user=pending_checkout.user).first()
         if cart:
@@ -361,19 +386,6 @@ class PaymentWebhookView(APIView):
         pending_checkout.consumed_at = timezone.now()
         pending_checkout.save(update_fields=["consumed_at"])
 
-        # --- Payment transaction history: confirmed payment ---
-        PaymentTransaction.objects.create(
-            user=order.user,
-            order=order,
-            provider=provider,
-            kind="webhook",
-            transaction_id=provider_reference,
-            amount=order.total,
-            success=True,
-            message="Payment confirmed",
-        )
-
-        # --- Seller Notified ---
         for seller in sellers_to_notify:
             try:
                 EmailService.send_seller_order_notification(order, seller)
@@ -382,7 +394,19 @@ class PaymentWebhookView(APIView):
                     f"Seller notification failed for order {order.order_number}: {e}"
                 )
 
-        # --- Receipt Generated ---
+  
+        if stock_failures:
+            try:
+                EmailService.send_admin_alert(
+                    subject=f"Stock reservation failed on paid order {order.order_number}",
+                    message=failure_note,
+                )
+            except Exception as e:
+                logger.error(
+                    f"Admin alert email failed for order {order.order_number}: {e}"
+                )
+
+
         try:
             EmailService.send_payment_receipt(
                 order,
@@ -390,12 +414,6 @@ class PaymentWebhookView(APIView):
             )
         except Exception as e:
             logger.error(f"Receipt email failed for order {order.order_number}: {e}")
-
-
-# ---------------------------------------------------------------------------
-# 4. Payment verification (client polls this after redirect back, in case
-#    the webhook hasn't landed yet)
-# ---------------------------------------------------------------------------
 
 
 class VerifyPaymentView(APIView):
@@ -416,14 +434,19 @@ class VerifyPaymentView(APIView):
         order = Order.objects.filter(
             stripe_checkout_session_id=transaction_id, user=request.user
         ).first()
+
         if order is None:
-            order = (
-                Order.objects.filter(
-                    user=request.user, created_at__gte=pending_checkout.created_at
-                )
-                .order_by("created_at")
-                .first()
-            )
+
+            confirming_txn = PaymentTransaction.objects.filter(
+                user=request.user,
+                provider=pending_checkout.provider,
+                transaction_id=transaction_id,
+                kind="webhook",
+                success=True,
+                order__isnull=False,
+            ).first()
+            if confirming_txn:
+                order = confirming_txn.order
 
         service = PaymentService(provider_name=pending_checkout.provider)
         result = service.verify_payment(transaction_id)
@@ -448,9 +471,6 @@ class VerifyPaymentView(APIView):
         )
 
 
-# ---------------------------------------------------------------------------
-# 6. Payment transaction history
-# ---------------------------------------------------------------------------
 
 
 class PaymentTransactionHistoryView(APIView):
@@ -479,9 +499,6 @@ class PaymentTransactionHistoryView(APIView):
         return Response(data)
 
 
-# ---------------------------------------------------------------------------
-# 7. Refund API (real for Stripe test mode, simulated for Chapa)
-# ---------------------------------------------------------------------------
 
 
 class RefundPaymentView(APIView):
@@ -527,7 +544,29 @@ class RefundPaymentView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        amount = request.data.get("amount")
+
+        raw_amount = request.data.get("amount")
+        amount = None
+        if raw_amount is not None:
+            try:
+                amount = Decimal(str(raw_amount))
+            except (InvalidOperation, TypeError, ValueError):
+                return Response(
+                    {"error": "amount must be a valid number."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount <= 0:
+                return Response(
+                    {"error": "amount must be greater than zero."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount > order.total:
+                return Response(
+                    {
+                        "error": f"amount ({amount}) cannot exceed the order total ({order.total})."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         service = PaymentService(provider_name=provider)
         result = service.refund_payment(provider_reference, amount)

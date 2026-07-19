@@ -1,3 +1,4 @@
+# orders/tracking_serializers.py
 from rest_framework import serializers
 from .models import Order
 
@@ -42,12 +43,12 @@ class OrderTrackingSerializer(serializers.ModelSerializer):
 
     def get_estimated_delivery(self, obj):
         if obj.shipped_at and not obj.delivered_at:
-            # Estimate 3-5 days after shipping
             return obj.shipped_at + timedelta(days=5)
         return None
 
 
 class OrderStatusUpdateSerializer(serializers.Serializer):
+
     status = serializers.ChoiceField(
         choices=[
             ("pending", "Pending"),

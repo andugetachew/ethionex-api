@@ -33,6 +33,7 @@ v1_urls = [
     path("cart/", include("cart.urls")),
     path("orders/", include("orders.urls")),
     path("seller/", include("dashboard.urls")),
+    path("seller/", include("orders.seller_urls")),
     path("admin/", include("admin_dashboard.urls")),
 ]
 

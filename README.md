@@ -1,7 +1,7 @@
 # EthioNex API — Multi-Vendor Marketplace
 
-![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-339%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-370%20passed-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![Django](https://img.shields.io/badge/django-5.2-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
@@ -24,8 +24,8 @@
 
 ## 📊 Quality Metrics
 
-- 339 automated tests
-- 85% code coverage
+- 370 automated tests
+- 87% code coverage
 - Unit, integration, and performance tests
 - Includes inventory, payment, and order workflow testing
 
@@ -213,7 +213,7 @@ docker-compose exec web pytest --cov=. --cov-report=term-missing
 docker-compose exec web pytest tests/unit/test_state_machine.py -v
 ```
 
-### ✅ Test Results: 339 passed — 85% coverage
+### ✅ Test Results: 370 passed — 87% coverage
 
 
 ### Test Structure

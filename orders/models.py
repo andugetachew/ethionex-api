@@ -1,3 +1,4 @@
+# orders/models.py
 from django.db import models
 from django.conf import settings
 from products.models import Product
@@ -16,6 +17,9 @@ class Order(models.Model):
         ("delivered", "Delivered"),
         ("cancelled", "Cancelled"),
         ("refunded", "Refunded"),
+        ("needs_review", "Needs Review"),  # FIX: paid order with a stock
+        # reservation failure — see orders/payment_views.py and
+        # orders/state_machine.py
     ]
 
     PAYMENT_CHOICES = [
