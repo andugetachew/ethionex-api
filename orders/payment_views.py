@@ -193,7 +193,6 @@ class CreateCheckoutView(APIView):
         )
 
 
-
 @method_decorator(csrf_exempt, name="dispatch")
 class PaymentWebhookView(APIView):
     """
@@ -278,7 +277,7 @@ class PaymentWebhookView(APIView):
             return
 
         if pending_checkout.consumed_at is not None:
-            return  
+            return
 
         if not paid:
             pending_checkout.consumed_at = timezone.now()
@@ -295,7 +294,6 @@ class PaymentWebhookView(APIView):
             )
             return
 
-       
         order = Order.objects.create(
             user=pending_checkout.user,
             status="paid",
@@ -319,7 +317,7 @@ class PaymentWebhookView(APIView):
         )
 
         sellers_to_notify = set()
-        stock_failures = []  
+        stock_failures = []
         for line in pending_checkout.cart_snapshot:
             product = Product.objects.select_for_update().get(id=line["product_id"])
             quantity = line["quantity"]
@@ -336,20 +334,30 @@ class PaymentWebhookView(APIView):
                     f"(product {product.id}, qty {quantity}): {e}"
                 )
                 stock_failures.append(
-                    {"product_id": product.id, "product_title": getattr(product, "title", str(product.id)), "error": str(e)}
+                    {
+                        "product_id": product.id,
+                        "product_title": getattr(product, "title", str(product.id)),
+                        "error": str(e),
+                    }
                 )
 
             if product.seller_id:
                 sellers_to_notify.add(product.seller)
 
-
         if stock_failures:
             order.status = "needs_review"
-            failure_note = "STOCK RESERVATION FAILURES (requires manual review): " + "; ".join(
-                f"{f['product_title']} (id={f['product_id']}): {f['error']}"
-                for f in stock_failures
+            failure_note = (
+                "STOCK RESERVATION FAILURES (requires manual review): "
+                + "; ".join(
+                    f"{f['product_title']} (id={f['product_id']}): {f['error']}"
+                    for f in stock_failures
+                )
             )
-            order.notes = f"{order.notes}\n{failure_note}".strip() if order.notes else failure_note
+            order.notes = (
+                f"{order.notes}\n{failure_note}".strip()
+                if order.notes
+                else failure_note
+            )
             order.save(update_fields=["status", "notes"])
 
             PaymentTransaction.objects.create(
@@ -363,7 +371,7 @@ class PaymentWebhookView(APIView):
                 message=f"Payment confirmed but stock reservation failed for {len(stock_failures)} item(s) — flagged for review",
             )
         else:
-          
+
             PaymentTransaction.objects.create(
                 user=order.user,
                 order=order,
@@ -394,7 +402,6 @@ class PaymentWebhookView(APIView):
                     f"Seller notification failed for order {order.order_number}: {e}"
                 )
 
-  
         if stock_failures:
             try:
                 EmailService.send_admin_alert(
@@ -405,7 +412,6 @@ class PaymentWebhookView(APIView):
                 logger.error(
                     f"Admin alert email failed for order {order.order_number}: {e}"
                 )
-
 
         try:
             EmailService.send_payment_receipt(
@@ -471,8 +477,6 @@ class VerifyPaymentView(APIView):
         )
 
 
-
-
 class PaymentTransactionHistoryView(APIView):
     """GET /api/v1/orders/payments/history/"""
 
@@ -497,8 +501,6 @@ class PaymentTransactionHistoryView(APIView):
             for t in transactions
         ]
         return Response(data)
-
-
 
 
 class RefundPaymentView(APIView):
@@ -543,7 +545,6 @@ class RefundPaymentView(APIView):
                 {"error": "No payment reference found for this order."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
 
         raw_amount = request.data.get("amount")
         amount = None

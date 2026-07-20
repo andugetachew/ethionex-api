@@ -33,9 +33,11 @@ class SellerOrdersView(ListAPIView):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        queryset = Order.objects.filter(
-            items__product__seller=self.request.user
-        ).distinct().order_by("-created_at")
+        queryset = (
+            Order.objects.filter(items__product__seller=self.request.user)
+            .distinct()
+            .order_by("-created_at")
+        )
 
         status_filter = self.request.query_params.get("status")
         if status_filter:
@@ -108,7 +110,7 @@ class TopSellingProductsView(APIView):
                 {"error": "limit must be a whole number."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        limit = max(1, min(limit, 100))  
+        limit = max(1, min(limit, 100))
 
         top_products = (
             Product.objects.filter(seller=request.user)

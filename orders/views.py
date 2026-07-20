@@ -46,7 +46,9 @@ class OrderCreateView(APIView):
 
         full_name = request.data.get("full_name", "")
         phone_number = request.data.get("phone_number") or request.data.get("phone", "")
-        address = request.data.get("address") or request.data.get("shipping_address", "")
+        address = request.data.get("address") or request.data.get(
+            "shipping_address", ""
+        )
         city = request.data.get("city", "")
 
         if not all([full_name, phone_number, address, city]):
@@ -175,11 +177,16 @@ class OrderDetailView(APIView):
 
         try:
             OrderStateMachine.transition(
-                order, new_status, reason=request.data.get("reason", ""), created_by=request.user
+                order,
+                new_status,
+                reason=request.data.get("reason", ""),
+                created_by=request.user,
             )
         except (ValueError, DjangoValidationError) as e:
             return Response(
-                {"error": f"Invalid transition from {order.status} to {new_status}: {e}"},
+                {
+                    "error": f"Invalid transition from {order.status} to {new_status}: {e}"
+                },
                 status=400,
             )
 
@@ -374,11 +381,16 @@ class OrderStatusUpdateView(APIView):
 
         try:
             OrderStateMachine.transition(
-                order, new_status, reason=request.data.get("reason", ""), created_by=request.user
+                order,
+                new_status,
+                reason=request.data.get("reason", ""),
+                created_by=request.user,
             )
         except (ValueError, DjangoValidationError) as e:
             return Response(
-                {"error": f"Invalid transition from {order.status} to {new_status}: {e}"},
+                {
+                    "error": f"Invalid transition from {order.status} to {new_status}: {e}"
+                },
                 status=400,
             )
 

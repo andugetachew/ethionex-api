@@ -45,7 +45,9 @@ class TestInitializePayment:
         assert result.success is True
         assert result.transaction_id == "cs_test_123"
         assert result.amount == Decimal("49.99")
-        assert result.metadata["checkout_url"] == "https://checkout.stripe.com/session123"
+        assert (
+            result.metadata["checkout_url"] == "https://checkout.stripe.com/session123"
+        )
 
     @patch("ethionex_api.payment.stripe_provider.stripe.checkout.Session.create")
     def test_converts_amount_to_cents(self, mock_create):
@@ -53,8 +55,10 @@ class TestInitializePayment:
         provider = StripeProvider(api_key="sk_test_abc")
 
         provider.initialize_payment(
-            amount=Decimal("49.99"), currency="usd",
-            success_url="http://s", cancel_url="http://c",
+            amount=Decimal("49.99"),
+            currency="usd",
+            success_url="http://s",
+            cancel_url="http://c",
         )
 
         _, kwargs = mock_create.call_args
@@ -66,8 +70,10 @@ class TestInitializePayment:
         provider = StripeProvider(api_key="sk_test_abc")
 
         result = provider.initialize_payment(
-            amount=Decimal("10"), currency="usd",
-            success_url="http://s", cancel_url="http://c",
+            amount=Decimal("10"),
+            currency="usd",
+            success_url="http://s",
+            cancel_url="http://c",
         )
 
         assert result.success is False
@@ -79,8 +85,11 @@ class TestInitializePayment:
         provider = StripeProvider(api_key="sk_test_abc")
 
         provider.initialize_payment(
-            amount=Decimal("10"), currency="usd", order_number="ORD-42",
-            success_url="http://s", cancel_url="http://c",
+            amount=Decimal("10"),
+            currency="usd",
+            order_number="ORD-42",
+            success_url="http://s",
+            cancel_url="http://c",
         )
 
         _, kwargs = mock_create.call_args
@@ -148,7 +157,9 @@ class TestRefundPayment:
 
     @patch("ethionex_api.payment.stripe_provider.stripe.Refund.create")
     @patch("ethionex_api.payment.stripe_provider.stripe.checkout.Session.retrieve")
-    def test_partial_refund_includes_amount_in_cents(self, mock_retrieve, mock_refund_create):
+    def test_partial_refund_includes_amount_in_cents(
+        self, mock_retrieve, mock_refund_create
+    ):
         mock_retrieve.return_value = Mock(payment_intent="pi_123")
         mock_refund_create.return_value = Mock(id="re_123", status="succeeded")
         provider = StripeProvider(api_key="sk_test_abc")
@@ -169,7 +180,9 @@ class TestRefundPayment:
 
     @patch("ethionex_api.payment.stripe_provider.stripe.Refund.create")
     @patch("ethionex_api.payment.stripe_provider.stripe.checkout.Session.retrieve")
-    def test_pending_refund_status_counts_as_success(self, mock_retrieve, mock_refund_create):
+    def test_pending_refund_status_counts_as_success(
+        self, mock_retrieve, mock_refund_create
+    ):
         mock_retrieve.return_value = Mock(payment_intent="pi_123")
         mock_refund_create.return_value = Mock(id="re_123", status="pending")
         provider = StripeProvider(api_key="sk_test_abc")
@@ -188,4 +201,6 @@ class TestConstructWebhookEvent:
         event = provider.construct_webhook_event(b"payload", "sig_header_value")
 
         assert event == {"type": "checkout.session.completed"}
-        mock_construct.assert_called_once_with(b"payload", "sig_header_value", "whsec_123")
+        mock_construct.assert_called_once_with(
+            b"payload", "sig_header_value", "whsec_123"
+        )

@@ -12,7 +12,8 @@ class OrderState(Enum):
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
-    NEEDS_REVIEW = "needs_review"  
+    NEEDS_REVIEW = "needs_review"
+
 
 class OrderStateMachine:
     VALID_TRANSITIONS = {
@@ -26,7 +27,6 @@ class OrderStateMachine:
         OrderState.SHIPPED: [OrderState.DELIVERED],
         OrderState.DELIVERED: [],
         OrderState.CANCELLED: [],
-       
         OrderState.NEEDS_REVIEW: [OrderState.PROCESSING, OrderState.CANCELLED],
     }
 

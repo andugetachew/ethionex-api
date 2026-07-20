@@ -98,7 +98,7 @@ Payment received for order {order.order_number}
 
     @staticmethod
     def send_admin_alert(subject, message):
-       
+
         recipients = list(
             User.objects.filter(is_staff=True, is_active=True)
             .exclude(email="")

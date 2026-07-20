@@ -12,10 +12,14 @@ from orders.models import Order
 
 User = get_user_model()
 
-application = URLRouter([
-    re_path(r"^ws/notifications/$", NotificationConsumer.as_asgi()),
-    re_path(r"^ws/orders/(?P<order_id>\w+)/track/$", OrderTrackingConsumer.as_asgi()),
-])
+application = URLRouter(
+    [
+        re_path(r"^ws/notifications/$", NotificationConsumer.as_asgi()),
+        re_path(
+            r"^ws/orders/(?P<order_id>\w+)/track/$", OrderTrackingConsumer.as_asgi()
+        ),
+    ]
+)
 
 
 @pytest.mark.asyncio
@@ -23,6 +27,7 @@ application = URLRouter([
 class TestNotificationConsumer:
     async def test_anonymous_user_connection_rejected(self):
         from django.contrib.auth.models import AnonymousUser
+
         communicator = WebsocketCommunicator(application, "/ws/notifications/")
         communicator.scope["user"] = AnonymousUser()
 
@@ -52,19 +57,26 @@ class TestNotificationConsumer:
 
     async def test_mark_read_updates_notification(self, test_user):
         notification = await database_sync_to_async(Notification.objects.create)(
-            user=test_user, title="Test", message="Hello", is_read=False,
+            user=test_user,
+            title="Test",
+            message="Hello",
+            is_read=False,
         )
 
         communicator = WebsocketCommunicator(application, "/ws/notifications/")
         communicator.scope["user"] = test_user
         await communicator.connect()
 
-        await communicator.send_to(text_data=json.dumps({
-            "type": "mark_read", "notification_ids": [notification.id]
-        }))
+        await communicator.send_to(
+            text_data=json.dumps(
+                {"type": "mark_read", "notification_ids": [notification.id]}
+            )
+        )
         await communicator.disconnect()
 
-        refreshed = await database_sync_to_async(Notification.objects.get)(id=notification.id)
+        refreshed = await database_sync_to_async(Notification.objects.get)(
+            id=notification.id
+        )
         assert refreshed.is_read is True
 
 
@@ -99,6 +111,7 @@ class TestOrderTrackingConsumer:
 
     async def test_anonymous_user_rejected(self, test_order):
         from django.contrib.auth.models import AnonymousUser
+
         communicator = WebsocketCommunicator(
             application, f"/ws/orders/{test_order.id}/track/"
         )
@@ -109,9 +122,7 @@ class TestOrderTrackingConsumer:
         assert connected is False
 
     async def test_nonexistent_order_rejected(self, test_user):
-        communicator = WebsocketCommunicator(
-            application, "/ws/orders/999999/track/"
-        )
+        communicator = WebsocketCommunicator(application, "/ws/orders/999999/track/")
         communicator.scope["user"] = test_user
         communicator.scope["url_route"] = {"kwargs": {"order_id": "999999"}}
 
